@@ -1,0 +1,776 @@
+{
+  "description": "Example wire messages. 'valid' says whether the JSON Schema must accept the message. Used by tests and as copy-paste examples for firmware authors.",
+  "vectors": [
+    {
+      "name": "hello from a bot",
+      "valid": true,
+      "message": {
+        "type": "hello",
+        "protocol": "0.1",
+        "firmware": "1.0.0",
+        "model": "movebot-r1",
+        "name": "MoveBot-1A2B",
+        "bot_id": "3f1a2b",
+        "mac": "02:4d:42:3f:1a:2b",
+        "boot_id": "c3d29e01",
+        "geometry": {
+          "wheel_diameter": 0.065,
+          "track_width": 0.12,
+          "ticks_per_rev": 360
+        },
+        "limits": {
+          "max_linear": 0.4,
+          "max_angular": 4.0,
+          "command_timeout_ms": 500,
+          "plan_queue": 32,
+          "plan_max_duration_ms": 600000,
+          "results_buffer": 64,
+          "max_clients": 4
+        },
+        "capabilities": {
+          "lights": [
+            "light_left",
+            "light_right"
+          ],
+          "status_leds": [
+            "status"
+          ],
+          "topics": [
+            "odom",
+            "encoders",
+            "power",
+            "net",
+            "status"
+          ],
+          "step_ops": [
+            "drive",
+            "turn",
+            "wait"
+          ],
+          "camera": {
+            "stream_port": 81,
+            "stream_path": "/stream",
+            "capture_path": "/capture",
+            "resolutions": [
+              "320x240",
+              "640x480",
+              "1280x720"
+            ],
+            "presets": {
+              "fast": {
+                "resolution": "320x240",
+                "fps": 25,
+                "quality": 75
+              },
+              "balanced": {
+                "resolution": "640x480",
+                "fps": 15,
+                "quality": 80
+              },
+              "detail": {
+                "resolution": "1280x720",
+                "fps": 8,
+                "quality": 85
+              }
+            },
+            "max_fps": 30,
+            "privacy_indicator": "dedicated"
+          }
+        },
+        "modules": [
+          {
+            "id": "front_distance",
+            "type": "distance",
+            "version": 1,
+            "values": [
+              "distance",
+              "valid"
+            ],
+            "actions": [
+              "set_range"
+            ],
+            "info": {
+              "min_range": 0.02,
+              "max_range": 2.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "hello without boot_id",
+      "valid": false,
+      "message": {
+        "type": "hello",
+        "protocol": "0.1",
+        "firmware": "1.0.0",
+        "name": "MoveBot-1A2B",
+        "bot_id": "3f1a2b",
+        "mac": "02:4d:42:3f:1a:2b",
+        "geometry": {
+          "wheel_diameter": 0.065,
+          "track_width": 0.12,
+          "ticks_per_rev": 360
+        },
+        "limits": {
+          "max_linear": 0.4,
+          "max_angular": 4.0,
+          "command_timeout_ms": 500,
+          "plan_queue": 32,
+          "plan_max_duration_ms": 600000,
+          "results_buffer": 64,
+          "max_clients": 4
+        },
+        "capabilities": {
+          "lights": [],
+          "status_leds": [],
+          "topics": [],
+          "step_ops": []
+        },
+        "modules": []
+      }
+    },
+    {
+      "name": "ping",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "9f2c41aa-1",
+        "cmd": "ping"
+      }
+    },
+    {
+      "name": "integer request id",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": 7,
+        "cmd": "ping"
+      }
+    },
+    {
+      "name": "request without id",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "cmd": "ping"
+      }
+    },
+    {
+      "name": "light.set",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "a-2",
+        "cmd": "light.set",
+        "name": "light_left",
+        "level": 0.5
+      }
+    },
+    {
+      "name": "light.set level out of range",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "a-3",
+        "cmd": "light.set",
+        "name": "light_left",
+        "level": 2
+      }
+    },
+    {
+      "name": "motor.write",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "a-4",
+        "cmd": "motor.write",
+        "left": 0.3,
+        "right": -0.3
+      }
+    },
+    {
+      "name": "drive.velocity missing w",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "a-5",
+        "cmd": "drive.velocity",
+        "v": 0.1
+      }
+    },
+    {
+      "name": "speed.set with neither limit",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "a-6",
+        "cmd": "speed.set"
+      }
+    },
+    {
+      "name": "sub",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "a-7",
+        "cmd": "sub",
+        "topics": [
+          "odom",
+          "power"
+        ],
+        "rate_hz": 10
+      }
+    },
+    {
+      "name": "sub to an unknown topic",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "a-8",
+        "cmd": "sub",
+        "topics": [
+          "gps"
+        ]
+      }
+    },
+    {
+      "name": "plan.load with a route",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "a-9",
+        "cmd": "plan.load",
+        "plan_id": "a91f0007",
+        "autostart": true,
+        "end": true,
+        "on_disconnect": "continue",
+        "steps": [
+          {
+            "seq": 1,
+            "op": "drive",
+            "dist": 0.5
+          },
+          {
+            "seq": 2,
+            "op": "turn",
+            "yaw": 1.5708
+          },
+          {
+            "seq": 3,
+            "op": "wait",
+            "ms": 1000
+          },
+          {
+            "seq": 4,
+            "op": "light",
+            "name": "light_left",
+            "level": 1
+          },
+          {
+            "seq": 5,
+            "op": "arc",
+            "radius": 0.3,
+            "angle": -1.5708,
+            "speed": 0.15
+          },
+          {
+            "seq": 6,
+            "op": "drive_for",
+            "v": 0.1,
+            "w": 0.0,
+            "ms": 500
+          },
+          {
+            "seq": 7,
+            "op": "status",
+            "name": "status",
+            "pattern": "blink"
+          },
+          {
+            "seq": 8,
+            "op": "speed",
+            "linear": 0.1
+          },
+          {
+            "seq": 9,
+            "op": "marker",
+            "label": "waypoint 1"
+          },
+          {
+            "seq": 10,
+            "op": "turn_to",
+            "yaw": 0
+          },
+          {
+            "seq": 11,
+            "op": "stop"
+          }
+        ]
+      }
+    },
+    {
+      "name": "plan step with seq 0",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "a-10",
+        "cmd": "plan.append",
+        "plan_id": "a91f0007",
+        "steps": [
+          {
+            "seq": 0,
+            "op": "wait",
+            "ms": 10
+          }
+        ]
+      }
+    },
+    {
+      "name": "plan step with an unknown op",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "a-11",
+        "cmd": "plan.append",
+        "plan_id": "a91f0007",
+        "steps": [
+          {
+            "seq": 1,
+            "op": "jump"
+          }
+        ]
+      }
+    },
+    {
+      "name": "drive step without dist",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "a-12",
+        "cmd": "plan.append",
+        "plan_id": "a91f0007",
+        "steps": [
+          {
+            "seq": 1,
+            "op": "drive"
+          }
+        ]
+      }
+    },
+    {
+      "name": "plan.load with an unknown on_disconnect policy",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "a-13",
+        "cmd": "plan.load",
+        "plan_id": "p1",
+        "on_disconnect": "panic"
+      }
+    },
+    {
+      "name": "plan status response",
+      "valid": true,
+      "message": {
+        "type": "res",
+        "id": "a-9",
+        "ok": true,
+        "plan_id": "a91f0007",
+        "state": "running",
+        "next_seq": 12,
+        "running_seq": 1,
+        "done_seq": 0,
+        "queue_free": 22,
+        "end": true,
+        "boot_id": "c3d29e01"
+      }
+    },
+    {
+      "name": "gap error",
+      "valid": true,
+      "message": {
+        "type": "res",
+        "id": "a-14",
+        "ok": false,
+        "error": {
+          "code": "gap",
+          "msg": "expected step 5, got 7",
+          "next_seq": 5
+        }
+      }
+    },
+    {
+      "name": "error without a code",
+      "valid": false,
+      "message": {
+        "type": "res",
+        "id": "a-15",
+        "ok": false,
+        "error": {
+          "msg": "nope"
+        }
+      }
+    },
+    {
+      "name": "bad_request response with null id",
+      "valid": true,
+      "message": {
+        "type": "res",
+        "id": null,
+        "ok": false,
+        "error": {
+          "code": "bad_request",
+          "msg": "message is not a JSON object"
+        }
+      }
+    },
+    {
+      "name": "step_done event",
+      "valid": true,
+      "message": {
+        "type": "evt",
+        "evt": "plan.step_done",
+        "t": 7480,
+        "plan_id": "a91f0007",
+        "seq": 1,
+        "op": "drive",
+        "result": "ok",
+        "pose": {
+          "x": 0.49,
+          "y": 0.0,
+          "yaw": 0.01
+        },
+        "t_start": 5120,
+        "t_end": 7480,
+        "queue_free": 30
+      }
+    },
+    {
+      "name": "step_done event without pose",
+      "valid": false,
+      "message": {
+        "type": "evt",
+        "evt": "plan.step_done",
+        "t": 7480,
+        "plan_id": "a91f0007",
+        "seq": 1,
+        "op": "drive",
+        "result": "ok",
+        "queue_free": 30
+      }
+    },
+    {
+      "name": "plan failed event",
+      "valid": true,
+      "message": {
+        "type": "evt",
+        "evt": "plan.failed",
+        "t": 9000,
+        "plan_id": "a91f0007",
+        "seq": 3,
+        "reason": "stalled"
+      }
+    },
+    {
+      "name": "motion stopped by the watchdog",
+      "valid": true,
+      "message": {
+        "type": "evt",
+        "evt": "motion.stopped",
+        "t": 1200,
+        "reason": "command_timeout"
+      }
+    },
+    {
+      "name": "odom telemetry",
+      "valid": true,
+      "message": {
+        "type": "tlm",
+        "topic": "odom",
+        "t": 1000,
+        "x": 0.1,
+        "y": 0.0,
+        "yaw": 0.0,
+        "v": 0.2,
+        "w": 0.0
+      }
+    },
+    {
+      "name": "encoder telemetry with fractional ticks",
+      "valid": false,
+      "message": {
+        "type": "tlm",
+        "topic": "encoders",
+        "t": 1000,
+        "left": {
+          "ticks": 1.5,
+          "speed": 0.1
+        },
+        "right": {
+          "ticks": 2,
+          "speed": 0.1
+        }
+      }
+    },
+    {
+      "name": "unknown message type",
+      "valid": false,
+      "message": {
+        "type": "chat",
+        "text": "hi"
+      }
+    },
+    {
+      "name": "hello from a bot without camera or modules",
+      "valid": true,
+      "message": {
+        "type": "hello",
+        "protocol": "0.1",
+        "firmware": "1.0.0",
+        "model": "movebot-r1",
+        "name": "MoveBot-1A2B",
+        "bot_id": "3f1a2b",
+        "mac": "02:4d:42:3f:1a:2b",
+        "boot_id": "c3d29e01",
+        "geometry": {
+          "wheel_diameter": 0.065,
+          "track_width": 0.12,
+          "ticks_per_rev": 360
+        },
+        "limits": {
+          "max_linear": 0.4,
+          "max_angular": 4.0,
+          "command_timeout_ms": 500,
+          "plan_queue": 32,
+          "plan_max_duration_ms": 600000,
+          "results_buffer": 64,
+          "max_clients": 4
+        },
+        "capabilities": {
+          "lights": [
+            "light_left",
+            "light_right"
+          ],
+          "status_leds": [
+            "status"
+          ],
+          "topics": [
+            "odom",
+            "encoders",
+            "power",
+            "net",
+            "status"
+          ],
+          "step_ops": [
+            "drive",
+            "turn",
+            "wait"
+          ],
+          "camera": false
+        },
+        "modules": []
+      }
+    },
+    {
+      "name": "camera.set preset",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "c-1",
+        "cmd": "camera.set",
+        "preset": "balanced"
+      }
+    },
+    {
+      "name": "camera.set custom",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "c-2",
+        "cmd": "camera.set",
+        "resolution": "640x480",
+        "fps": 10,
+        "quality": 60
+      }
+    },
+    {
+      "name": "camera.set with a made-up preset",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "c-3",
+        "cmd": "camera.set",
+        "preset": "ultra"
+      }
+    },
+    {
+      "name": "camera.set with too many fps",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "c-4",
+        "cmd": "camera.set",
+        "fps": 120
+      }
+    },
+    {
+      "name": "module.read",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "m-1",
+        "cmd": "module.read",
+        "module_id": "front_distance"
+      }
+    },
+    {
+      "name": "module.read without module_id",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "m-2",
+        "cmd": "module.read"
+      }
+    },
+    {
+      "name": "module.call with args",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "m-3",
+        "cmd": "module.call",
+        "module_id": "front_distance",
+        "action": "set_range",
+        "args": {
+          "max": 1.5
+        }
+      }
+    },
+    {
+      "name": "module.call without action",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "m-4",
+        "cmd": "module.call",
+        "module_id": "imu"
+      }
+    },
+    {
+      "name": "module.read response",
+      "valid": true,
+      "message": {
+        "type": "res",
+        "id": "m-1",
+        "ok": true,
+        "module_id": "front_distance",
+        "module_type": "distance",
+        "values": {
+          "distance": 0.42,
+          "valid": true
+        }
+      }
+    },
+    {
+      "name": "unknown module error",
+      "valid": true,
+      "message": {
+        "type": "res",
+        "id": "m-5",
+        "ok": false,
+        "error": {
+          "code": "unknown_module",
+          "msg": "no module with id 'arm'"
+        }
+      }
+    },
+    {
+      "name": "sub to a module topic",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "m-6",
+        "cmd": "sub",
+        "topics": [
+          "module.front_distance"
+        ]
+      }
+    },
+    {
+      "name": "module telemetry",
+      "valid": true,
+      "message": {
+        "type": "tlm",
+        "topic": "module.front_distance",
+        "t": 1200,
+        "module_id": "front_distance",
+        "values": {
+          "distance": 0.42,
+          "valid": true
+        }
+      }
+    },
+    {
+      "name": "module telemetry without values",
+      "valid": false,
+      "message": {
+        "type": "tlm",
+        "topic": "module.imu",
+        "t": 1200,
+        "module_id": "imu"
+      }
+    },
+    {
+      "name": "module plugged in",
+      "valid": true,
+      "message": {
+        "type": "evt",
+        "evt": "module.added",
+        "t": 5000,
+        "module": {
+          "id": "imu",
+          "type": "imu",
+          "version": 1,
+          "values": [
+            "heading",
+            "gyro_z"
+          ],
+          "actions": [
+            "calibrate"
+          ]
+        }
+      }
+    },
+    {
+      "name": "module unplugged",
+      "valid": true,
+      "message": {
+        "type": "evt",
+        "evt": "module.removed",
+        "t": 6000,
+        "module_id": "imu"
+      }
+    },
+    {
+      "name": "module id with capital letters",
+      "valid": false,
+      "message": {
+        "type": "evt",
+        "evt": "module.removed",
+        "t": 6000,
+        "module_id": "IMU"
+      }
+    },
+    {
+      "name": "camera streaming event",
+      "valid": true,
+      "message": {
+        "type": "evt",
+        "evt": "camera.streaming",
+        "t": 100,
+        "active": true
+      }
+    }
+  ]
+}

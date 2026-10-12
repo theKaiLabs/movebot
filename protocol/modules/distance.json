@@ -1,0 +1,31 @@
+{
+  "type": "distance",
+  "version": 1,
+  "title": "Distance sensor",
+  "description": "Measures the distance to the nearest object in one direction (time-of-flight, ultrasonic or infrared).",
+  "values": {
+    "distance": {
+      "type": ["number", "null"],
+      "unit": "m",
+      "description": "Distance to the nearest object, or null when nothing is in range."
+    },
+    "valid": {
+      "type": "boolean",
+      "description": "False when nothing is in range or the reading is unreliable."
+    }
+  },
+  "actions": {
+    "set_range": {
+      "description": "Ignore objects further away than this.",
+      "args": { "max": { "type": "number", "unit": "m", "minimum": 0.1, "maximum": 4.0 } },
+      "result": { "max_range": { "type": "number", "unit": "m" } }
+    }
+  },
+  "info": {
+    "min_range": { "type": "number", "unit": "m" },
+    "max_range": { "type": "number", "unit": "m" },
+    "angle": { "type": "number", "unit": "rad", "description": "Direction relative to the bot's front, + = left." },
+    "fov": { "type": "number", "unit": "rad", "description": "Width of the sensing cone." }
+  },
+  "events": {}
+}

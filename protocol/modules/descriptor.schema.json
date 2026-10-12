@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:movebot:module-descriptor:1",
+  "title": "MoveBot module type descriptor",
+  "description": "Describes one module type: the values it reports, the actions it accepts and its events. One file per type in protocol/modules/.",
+  "type": "object",
+  "required": ["type", "version", "title", "description", "values", "actions"],
+  "additionalProperties": false,
+  "properties": {
+    "type": { "type": "string", "pattern": "^[a-z][a-z0-9_.]{0,47}$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "values": { "$ref": "#/$defs/fields" },
+    "actions": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]{0,31}$" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["description"],
+        "properties": {
+          "description": { "type": "string" },
+          "args": { "$ref": "#/$defs/fields" },
+          "result": { "$ref": "#/$defs/fields" }
+        }
+      }
+    },
+    "info": { "$ref": "#/$defs/fields" },
+    "events": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["description"],
+        "properties": { "description": { "type": "string" }, "data": { "$ref": "#/$defs/fields" } }
+      }
+    }
+  },
+  "$defs": {
+    "fields": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]{0,31}$" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {},
+          "unit": { "type": "string" },
+          "description": { "type": "string" },
+          "minimum": { "type": "number" },
+          "maximum": { "type": "number" }
+        }
+      }
+    }
+  }
+}

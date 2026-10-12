@@ -1,0 +1,14 @@
+id = "drive-with-buttons"
+title = "Drive with buttons"
+summary = "Your first app: every function becomes a button that moves the robot."
+level = 0
+minutes = 20
+concepts = ["functions", "moves in metres and degrees", "your first app"]
+requires = []
+needs = []
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+world = "empty"
+lesson_style = "overview"
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

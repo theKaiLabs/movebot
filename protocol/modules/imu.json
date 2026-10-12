@@ -1,0 +1,25 @@
+{
+  "type": "imu",
+  "version": 1,
+  "title": "Inertial measurement unit",
+  "description": "Gyroscope and accelerometer, reduced to what a robot on a flat floor needs. The firmware does the sensor fusion.",
+  "values": {
+    "heading": {
+      "type": "number",
+      "unit": "rad",
+      "description": "Heading since the last calibrate, counter-clockwise positive, wrapped to [-pi, pi)."
+    },
+    "gyro_z": { "type": "number", "unit": "rad/s", "description": "Turn rate, + = turning left." },
+    "accel_x": { "type": "number", "unit": "m/s^2", "description": "Forward acceleration." },
+    "accel_y": { "type": "number", "unit": "m/s^2", "description": "Sideways acceleration, + = left." }
+  },
+  "actions": {
+    "calibrate": {
+      "description": "Make the current direction heading 0 (the bot should stand still).",
+      "args": {},
+      "result": { "heading": { "type": "number", "unit": "rad" } }
+    }
+  },
+  "info": {},
+  "events": {}
+}

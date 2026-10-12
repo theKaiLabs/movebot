@@ -1,0 +1,38 @@
+[project]
+name = "movebot"
+dynamic = ["version"]
+description = "Program the MoveBot learning robot from Python (includes a simulator)."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "MoveBot team" }]
+keywords = ["robot", "education", "esp32", "robotics", "simulator"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3",
+    "Topic :: Education",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=1.24",
+    "pillow>=10.0",
+    "websockets>=14.0",
+]
+
+[project.scripts]
+movebot = "movebot.cli:main"
+
+[project.optional-dependencies]
+vision = [
+    "opencv-python-headless>=4.9",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/movebot/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/movebot"]
