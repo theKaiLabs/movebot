@@ -54,15 +54,19 @@ class Route:
         return self._add("turn", degrees=float(degrees), speed=speed)
 
     def left(self, degrees: float = 90, *, speed: float | None = None) -> Route:
+        """Turn left on the spot (90 degrees unless you say otherwise)."""
         return self.turn(abs(degrees), speed=speed)
 
     def right(self, degrees: float = 90, *, speed: float | None = None) -> Route:
+        """Turn right on the spot (90 degrees unless you say otherwise)."""
         return self.turn(-abs(degrees), speed=speed)
 
     def u_turn(self) -> Route:
+        """Turn around (180 degrees)."""
         return self.turn(180)
 
     def spin(self, degrees: float = 360) -> Route:
+        """Spin on the spot, a full turn unless you say otherwise."""
         return self.turn(degrees)
 
     def turn_to(self, heading: float) -> Route:
@@ -84,20 +88,25 @@ class Route:
         return self._add("go_to", x=float(x), y=float(y), speed=speed)
 
     def wait(self, seconds: float) -> Route:
+        """Wait before the next move."""
         return self._add("wait", seconds=float(seconds))
 
     # -- other things the bot can do on the way ------------------------------------------
 
     def lights_on(self) -> Route:
+        """Switch every light on."""
         return self._add("lights", level=1.0)
 
     def lights_off(self) -> Route:
+        """Switch every light off."""
         return self._add("lights", level=0.0)
 
     def light(self, name: str, level: float) -> Route:
+        """Set one light's brightness, 0 (off) to 1 (full)."""
         return self._add("light", name=name, level=float(level))
 
     def status_led(self, pattern: str, *, name: str = "status") -> Route:
+        """Show a status LED pattern: ``off``, ``on``, ``blink``, ``blink_fast``, ``pulse``."""
         return self._add("status_led", pattern=pattern, name=name)
 
     def speed(self, percent: float) -> Route:
@@ -224,10 +233,12 @@ class Route:
     # -- saving and loading --------------------------------------------------------------
 
     def to_json(self) -> str:
+        """The route as JSON text, to save it in a file."""
         return json.dumps({"movebot_route": 1, "moves": self._ops}, indent=2)
 
     @classmethod
     def from_json(cls, text: str, bot: Any = None) -> Route:
+        """A route from JSON text made by ``to_json()``."""
         data = json.loads(text)
         if data.get("movebot_route") != 1:
             raise ValueError("not a MoveBot route file")

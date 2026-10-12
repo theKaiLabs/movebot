@@ -1,8 +1,9 @@
 """Drive with buttons: your first MoveBot app.
 
-Each function below becomes a button. Change them, add your own, and run again!
+Click an arrow to move one step. Every function below with @app.... above it becomes part
+of the screen: change them, add your own, and run again!
 
-Run it with a robot, or first start the simulator in another terminal: movebot sim
+Run it from the MoveBot app, or with a robot (or `movebot sim`) and the app's Python.
 """
 
 from movebot import Bot
@@ -12,45 +13,50 @@ bot = Bot()
 app = App("Drive with buttons", bot=bot)
 
 with app.row():
-    with app.card("Move"):
+    # --8<-- [start:camera]
+    app.video("What the robot sees", bot.camera)
+    # --8<-- [end:camera]
 
-        @app.button("Forward 20 cm")
-        def forward():
-            bot.forward(0.2)
+    with app.column():
+        with app.card("Move one step"):
+            # --8<-- [start:dpad]
+            @app.dpad("Click an arrow")
+            def step(direction):
+                if direction == "up":
+                    bot.forward(0.2)  # metres
+                elif direction == "down":
+                    bot.back(0.2)
+                elif direction == "left":
+                    bot.left()  # 90 degrees
+                elif direction == "right":
+                    bot.right()
+                # when the arrow is let go, direction is None: nothing to do
 
-        @app.button("Back 20 cm", style="secondary")
-        def back():
-            bot.back(0.2)
+            # --8<-- [end:dpad]
 
-        @app.button("Turn left", style="secondary")
-        def left():
-            bot.left()
+        with app.card("Shapes"):
+            # --8<-- [start:square]
+            @app.button("Draw a square")
+            def square():
+                for _ in range(4):
+                    bot.forward(0.3)
+                    bot.left()
 
-        @app.button("Turn right", style="secondary")
-        def right():
-            bot.right()
+            # --8<-- [end:square]
 
-    with app.card("Shapes"):
+            @app.slider("Speed", 10, 100, 50, unit="%")
+            def set_speed(percent):
+                bot.speed = percent
 
-        @app.button("Draw a square")
-        def square():
-            for _ in range(4):
-                bot.forward(0.3)
-                bot.left()
+        with app.card("Where am I"):
 
-        @app.slider("Speed", 10, 100, 50, unit="%")
-        def set_speed(percent):
-            bot.speed = percent
+            @app.output("Position")
+            def position():
+                return bot.pose
 
-    with app.card("Where am I"):
-
-        @app.output("Position")
-        def position():
-            return bot.pose
-
-        @app.button("Lights on/off", style="secondary")
-        def lights():
-            bot.lights.toggle()
+            @app.button("Lights on/off", style="secondary")
+            def lights():
+                bot.lights.toggle()
 
 
 app.run()

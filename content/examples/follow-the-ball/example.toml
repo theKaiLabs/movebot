@@ -1,6 +1,7 @@
 id = "follow-the-ball"
 title = "Follow the blue ball"
 summary = "The camera finds a ball by its colour and the robot steers towards it."
+icon = "ball"            # drawing on the app's card: drive, buttons, camera, ball
 level = 3                       # 0 meet · 1 move · 2 see · 3 react · 4 learn · 5 robotics
 minutes = 45
 concepts = ["camera images", "HSV colour", "masks and contours", "proportional steering", "latency"]

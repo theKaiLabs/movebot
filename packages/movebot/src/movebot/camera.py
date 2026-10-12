@@ -81,6 +81,7 @@ class CameraFrame:
         return width, height
 
     def save(self, path: str) -> str:
+        """Save this picture as a JPEG file and return the path."""
         with open(path, "wb") as fh:
             fh.write(self.jpeg)
         return path

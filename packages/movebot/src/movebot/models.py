@@ -21,9 +21,11 @@ class Pose:
 
     @property
     def heading(self) -> float:
+        """Which way the bot faces, in degrees (0 = the way it faced at the start, + = left)."""
         return math.degrees(self.yaw)
 
     def distance_to(self, other: Pose) -> float:
+        """Straight-line distance to another pose, in metres."""
         return math.hypot(other.x - self.x, other.y - self.y)
 
     @classmethod
@@ -47,6 +49,11 @@ class Wheel:
 
 @dataclass(frozen=True)
 class Encoders:
+    """How far each wheel has turned (``ticks``) and how fast it turns now (``speed``, m/s).
+
+    ``bot.encoders.left.ticks``, ``bot.encoders.right.speed``.
+    """
+
     left: Wheel = field(default_factory=Wheel)
     right: Wheel = field(default_factory=Wheel)
 
@@ -72,10 +79,12 @@ class StepResult:
 
     @property
     def ok(self) -> bool:
+        """True if the move finished normally (not failed or cancelled)."""
         return self.result == "ok"
 
     @property
     def duration(self) -> float | None:
+        """How long the move took, in seconds."""
         if self.t_start is None or self.t_end is None:
             return None
         return (self.t_end - self.t_start) / 1000
@@ -103,10 +112,12 @@ class RouteResult:
 
     @property
     def ok(self) -> bool:
+        """True if every move of the route finished normally."""
         return all(step.ok for step in self.steps) and len(self.steps) == len(self.expected)
 
     @property
     def final_pose(self) -> Pose | None:
+        """Where the bot ended up, as its wheels measured it."""
         return self.steps[-1].pose if self.steps else None
 
     @property

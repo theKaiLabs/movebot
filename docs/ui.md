@@ -43,7 +43,7 @@ def position():
 
 | | |
 |---|---|
-| `App(title, bot=None, refresh=0.2)` | `bot=` adds a red **STOP** button; the **space bar** stops the bot too, and closing the app stops it. `refresh` is how often live values update (seconds). |
+| `App(title, bot=None, refresh=0.2)` | `bot=` adds a red **Stop robot** button (in the MoveBot app, use the one at the top); the **space bar** stops the bot too, and closing the app stops it. `refresh` is how often live values update (seconds). |
 | `app.run()` | Open the screen and wait until you press Ctrl+C. |
 | `app.start()` | Open the screen and carry on with your own code (for example a camera loop). Returns the address. |
 | `app.stop()` | Close the screen (and stop the bot). |
@@ -75,6 +75,7 @@ Every component returns an object; keep it in a variable to read or change it la
 | `select(label, options, value=None, on_change=None)` | Drop-down list; `on_change(choice)`. | `.value` |
 | `input(label, on_submit, placeholder=None)` | Text box; Enter runs `on_submit(text)`. | `.value` |
 | `joystick(label, on_move)` | `on_move(x, y)`, both -1..1 (up is +y, right is +x); back to (0, 0) when released. | `.x`, `.y` |
+| `dpad(label, on_change, keys=True)` | Four arrow buttons. `on_change("up")` (or `"down"`, `"left"`, `"right"`) when one is pressed, `on_change(None)` when it is let go. `keys=True`: the arrow keys and W A S D work too. | `.direction` |
 | `keyboard(on_key, keys=None)` | `on_key(event)` with `event.key` and `event.pressed`. | `.pressed` (keys held now) |
 | `text(label, value=None, unit=None)` | A labelled value. Give a function to keep it updated. | `.value` |
 | `output(label)` | Decorator form of a live `text`. | |
@@ -90,8 +91,9 @@ Every component also has `.visible` (show or hide it) and `.update(...)`.
 
 ## Seeing which code made what
 
-The **</> Code** button at the top of the screen marks every part with the file and line that
-created it; click a part to see (or, in the MoveBot app, jump to) that line. Lessons use the
+The **</> Code** button at the top of the screen (**</> Show code** in the MoveBot app) marks
+every part with the file and line that created it; click a part to see (or, in the MoveBot
+app, jump to) that line. Lessons use the
 same information to explain how the screen is connected to the code.
 
 ## A ready-made control panel

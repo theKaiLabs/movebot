@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import time
 
 import pytest
 
@@ -168,3 +169,25 @@ def test_disconnect_policies(connect_client, policy, expected_state, expected_do
         assert results[0]["result"] == "cancelled"
     else:
         assert results[0]["result"] == "ok"
+
+
+def test_an_idle_open_plan_of_a_client_that_left_does_not_block(connect_client):
+    owner = connect_client()
+    owner.ok("stop")
+    pid = plan_id()
+    # no `end`: the owner could still add moves (this is what bot.forward() etc. do)
+    owner.ok("plan.load", plan_id=pid, steps=waits(50), autostart=True)
+    owner.wait_for("evt", "plan.step_done", plan_id=pid, seq=1)
+    owner.close()  # e.g. the program was ended
+
+    other = connect_client()
+    new = plan_id()
+    deadline = time.monotonic() + 5
+    while True:  # the bot may take a moment to notice the closed connection
+        res = other.req("plan.load", plan_id=new, steps=waits(10), autostart=True, end=True)
+        if res["ok"] or time.monotonic() > deadline:
+            break
+        assert res["error"]["code"] == "busy"
+        time.sleep(0.1)
+    assert res["ok"], f"the old plan still blocks: {res.get('error')}"
+    other.wait_for("evt", "plan.done", plan_id=new)

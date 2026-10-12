@@ -260,6 +260,10 @@ class Relay:
                         await self.conn.request("plan.cancel", plan_id=plan_id)
                     elif status.get("state") not in TERMINAL_PLAN_STATES:
                         self._cancel_when_paused.add(plan_id)
+                else:
+                    # "continue": the plan runs to its end, but the program that could add
+                    # more steps is gone, so close it; otherwise it would block everyone
+                    await self.conn.request("plan.append", plan_id=plan_id, steps=[], end=True)
 
     # -- subscriptions -----------------------------------------------------------------------
 

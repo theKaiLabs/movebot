@@ -99,10 +99,12 @@ class Bot:
 
     @property
     def connected(self) -> bool:
+        """True while the bot is connected (the library reconnects by itself)."""
         return self._abot.conn.connected
 
     @property
     def name(self) -> str:
+        """The bot's name, e.g. ``"MoveBot-3F2A"``."""
         return self._abot.name
 
     @property
@@ -154,9 +156,11 @@ class Bot:
         return self._move(self._abot.turn(degrees, speed=speed, wait=wait))
 
     def u_turn(self, *, wait: bool = True) -> Any:
+        """Turn around on the spot (180 degrees)."""
         return self._move(self._abot.u_turn(wait=wait))
 
     def spin(self, degrees: float = 360, *, wait: bool = True) -> Any:
+        """Spin on the spot, a full turn unless you say otherwise (+ = left)."""
         return self._move(self._abot.spin(degrees, wait=wait))
 
     def turn_to(self, heading: float, *, wait: bool = True) -> Any:
@@ -215,6 +219,7 @@ class Bot:
     def run_route(
         self, route: Route, *, wait: bool = True, on_disconnect: str = "continue"
     ) -> RouteResult | RouteHandle:
+        """Run a route built with ``bot.route()`` (same as ``route.run()``)."""
         result = self._run(self._abot.run_route(route, wait=wait, on_disconnect=on_disconnect))
         return RouteHandle(self, result) if isinstance(result, AsyncRouteHandle) else result
 
@@ -239,6 +244,7 @@ class MoveHandle:
 
     @property
     def done(self) -> bool:
+        """True once the move has finished (or the plan ended)."""
         return self.seq in self._plan.results or self._plan.finished
 
     def wait(self, timeout: float | None = None) -> StepResult:
@@ -258,6 +264,7 @@ class RouteHandle:
 
     @property
     def done(self) -> bool:
+        """True once the route has finished."""
         return self._handle.done
 
     @property
@@ -266,6 +273,7 @@ class RouteHandle:
         return self._handle.progress
 
     def wait(self, timeout: float | None = None) -> RouteResult:
+        """Wait until the route is finished and return what happened."""
         return self._bot._run(self._handle.wait(), timeout)
 
     def pause(self) -> None:
@@ -273,9 +281,11 @@ class RouteHandle:
         self._bot._run(self._handle.pause())
 
     def resume(self) -> None:
+        """Carry on after ``pause()``."""
         self._bot._run(self._handle.resume())
 
     def cancel(self) -> None:
+        """Stop the route; moves not started yet are dropped."""
         self._bot._run(self._handle.cancel())
 
 
@@ -292,12 +302,15 @@ class Lights:
                     setattr(self, short, Lights(bot, light))
 
     def on(self) -> None:
+        """Full brightness."""
         self.level = 1.0
 
     def off(self) -> None:
+        """Off."""
         self.level = 0.0
 
     def toggle(self) -> None:
+        """On if off, off if on."""
         self.level = 0.0 if self.level > 0 else 1.0
 
     @property
@@ -317,18 +330,23 @@ class StatusLed:
         self._bot = bot
 
     def set(self, pattern: str) -> None:
+        """Show a pattern: ``off``, ``on``, ``blink``, ``blink_fast`` or ``pulse``."""
         self._bot._run(self._bot._abot.set_status_led(pattern))
 
     def on(self) -> None:
+        """Light up."""
         self.set("on")
 
     def off(self) -> None:
+        """Go dark."""
         self.set("off")
 
     def blink(self, fast: bool = False) -> None:
+        """Blink (``fast=True`` for quick blinks)."""
         self.set("blink_fast" if fast else "blink")
 
     def pulse(self) -> None:
+        """Fade slowly in and out."""
         self.set("pulse")
 
 
@@ -350,6 +368,7 @@ class Camera:
 
     @property
     def available(self) -> bool:
+        """True if this bot has a camera."""
         return self._cam.available
 
     @property
@@ -455,4 +474,5 @@ class SimControl:
         self._call(lambda: self._server.bot.world.balls.append(ball))
 
     def clear_balls(self) -> None:
+        """Take every ball out of the simulated world."""
         self._call(lambda: self._server.bot.world.balls.clear())

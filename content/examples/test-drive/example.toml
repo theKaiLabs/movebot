@@ -1,0 +1,15 @@
+id = "test-drive"
+title = "Test drive"
+summary = "Hold the arrows to drive around and see what the robot sees. No code needed."
+icon = "drive"            # drawing on the app's card: drive, buttons, camera, ball
+level = 0
+minutes = 10
+concepts = ["driving at a speed", "stopping", "position from the wheels"]
+requires = []
+needs = ["camera"]
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+world = "ball_arena"
+lesson_style = "overview"
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

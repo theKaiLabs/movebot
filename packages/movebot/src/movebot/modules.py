@@ -89,6 +89,7 @@ class DistanceSensor(Module):
 
     @property
     def distance_cm(self) -> float | None:
+        """The same distance in centimetres."""
         d = self.distance
         return None if d is None else d * 100
 

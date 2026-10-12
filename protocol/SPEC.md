@@ -241,6 +241,11 @@ closes without cancelling:
 | `finish_step` | Finish the running step, then cancel (reason `disconnect`). |
 | `stop` | Cancel immediately (reason `disconnect`). |
 
+An open plan (no `end` yet) whose owner disconnected under `continue` and that has nothing
+left to run (no running step, empty queue) MUST NOT block other clients: a `plan.load` of a
+different plan cancels it (reason `replaced`) instead of failing with `busy`. If the owner
+reconnects first and sends any command for the plan, it owns it again.
+
 Speed limits, step timeouts, stall detection and the maximum plan duration apply whatever the
 policy. A deliberate stop (e.g. the app's Stop button) sends `plan.cancel` or `stop`; the
 policy only covers unplanned link loss.
@@ -364,7 +369,8 @@ is indistinguishable from a bot. The conformance suite is run through the refere
   current manual command disconnects, it stops the motion and emits `motion.stopped`
   (`disconnect`); when a plan's owner disconnects, it applies the plan's `on_disconnect`
   policy (`stop` → `plan.cancel`; `finish_step` → `plan.pause`, then `plan.cancel` once
-  paused).
+  paused; `continue` → `plan.append` with no steps and `end: true`, because a local client
+  that disconnects from the relay has ended and will not add more steps).
 * MUST close its local connections with close code **1012** when the bot restarted (new
   `boot_id`), so clients notice, and MUST NOT accept local connections while it cannot reach
   the bot (it waits up to 10 s, then refuses with 1013).
