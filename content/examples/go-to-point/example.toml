@@ -1,0 +1,15 @@
+id = "go-to-point"
+title = "Go to a point"
+summary = "Click a spot on the map: the robot steers there with feedback control. Compare it with a planned route."
+icon = "target"
+level = 5
+minutes = 45
+concepts = ["feedback control", "proportional control", "atan2 and angles", "open loop vs closed loop"]
+requires = []
+needs = []
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+world = "ball_arena"
+lesson_style = "walkthrough"
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

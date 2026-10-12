@@ -281,6 +281,9 @@
             },
             "pattern": {
               "$ref": "#/$defs/status_pattern"
+            },
+            "color": {
+              "$ref": "#/$defs/color"
             }
           },
           "required": [
@@ -487,6 +490,9 @@
               },
               "pattern": {
                 "$ref": "#/$defs/status_pattern"
+              },
+              "color": {
+                "$ref": "#/$defs/color"
               }
             }
           }
@@ -973,6 +979,13 @@
             },
             "camera": {
               "$ref": "#/$defs/camera_capability"
+            },
+            "color_leds": {
+              "description": "Status LEDs that also take a colour (status.set color).",
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/light_name"
+              }
             }
           }
         },
@@ -1425,6 +1438,12 @@
               },
               "camera_streaming": {
                 "type": "boolean"
+              },
+              "status_colors": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/$defs/color"
+                }
               }
             }
           }
@@ -1590,6 +1609,17 @@
           }
         }
       ]
+    },
+    "color": {
+      "description": "An LED colour: red, green, blue, each 0-255.",
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+      },
+      "minItems": 3,
+      "maxItems": 3
     }
   }
 }

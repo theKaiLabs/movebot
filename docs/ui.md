@@ -81,6 +81,7 @@ Every component returns an object; keep it in a variable to read or change it la
 | `output(label)` | Decorator form of a live `text`. | |
 | `meter(label, value, min=0, max=100, unit=None)` | A bar between `min` and `max` (value or function). | `.value` |
 | `plot(label, source=None, window=30)` | Live chart of the last `window` seconds. `source` returns a number or a dict of numbers (one line each). | `.add(value)` |
+| `map(label, robot=None, x=(-1, 3), y=(-1.5, 1.5), trail=True, on_click=None)` | A map seen from above, in metres: the robot (`robot=lambda: bot.pose`) and its trail. `on_click(x, y)` gets the spot clicked. | `.line(name, points)`, `.dots(name, points)`, `.clear()` |
 | `video(label, source=None, fps=15, on_click=None)` | Pictures from `bot.camera`, from a function returning an image, or from `.show(image)`. `on_click(click)` gets `click.x`, `click.y`, `click.color` (B, G, R) and `click.hsv` (OpenCV scale). | `.show(image)` |
 | `log(label, lines=200, capture_print=False)` | Lines of text; `capture_print=True` also shows everything you `print`. | `.write(...)`, `.clear()` |
 | `markdown(text)` | Plain text with **bold**, `code`, headings and lists. | |

@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import time
 
+import pytest
+
+from .conftest import plan_id
+
 
 def test_lights(client):
     names = client.hello["capabilities"]["lights"]
@@ -22,6 +26,29 @@ def test_status_led(client):
     assert client.ok("status.set", name=name, pattern="blink")["pattern"] == "blink"
     client.err("status.set", "invalid_param", name=name, pattern="disco")
     client.ok("status.set", name=name, pattern="on")
+
+
+def test_colour_status_led(client):
+    caps = client.hello["capabilities"]
+    colour = caps.get("color_leds", [])
+    if not colour:
+        pytest.skip("this bot has no colour LED")
+    name = colour[0]
+    assert set(colour) <= set(caps["status_leds"])
+    res = client.ok("status.set", name=name, pattern="blink", color=[255, 120, 0])
+    assert res["color"] == [255, 120, 0]
+    assert client.ok("status.set", name=name, pattern="on")["color"] == [255, 120, 0]  # kept
+    client.err("status.set", "invalid_param", name=name, pattern="on", color=[256, 0, 0])
+    client.err("status.set", "invalid_param", name=name, pattern="on", color="red")
+    plain = [n for n in caps["status_leds"] if n not in colour]
+    if plain:
+        client.err("status.set", "invalid_param", name=plain[0], pattern="on", color=[0, 0, 255])
+    # as a plan step
+    pid = plan_id()
+    step = {"seq": 1, "op": "status", "name": name, "pattern": "on", "color": [0, 255, 0]}
+    client.ok("plan.load", plan_id=pid, steps=[step], autostart=True, end=True)
+    client.wait_for("evt", "plan.done", plan_id=pid)
+    client.ok("status.set", name=name, pattern="off")
 
 
 def test_speed_limits_are_clamped(client):

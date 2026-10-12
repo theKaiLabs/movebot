@@ -1,0 +1,15 @@
+id = "teach-by-showing"
+title = "Teach by showing"
+summary = "Show the robot pictures and tell it what each one means. Then it decides by itself."
+icon = "brain"
+level = 4
+minutes = 45
+concepts = ["machine learning", "training examples", "features", "k-nearest neighbours", "confidence"]
+requires = []
+needs = ["camera"]
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+world = "ball_arena"
+lesson_style = "walkthrough"
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

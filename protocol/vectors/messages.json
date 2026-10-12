@@ -33,7 +33,8 @@
             "light_right"
           ],
           "status_leds": [
-            "status"
+            "status",
+            "rgb"
           ],
           "topics": [
             "odom",
@@ -75,7 +76,10 @@
             },
             "max_fps": 30,
             "privacy_indicator": "dedicated"
-          }
+          },
+          "color_leds": [
+            "rgb"
+          ]
         },
         "modules": [
           {
@@ -770,6 +774,53 @@
         "evt": "camera.streaming",
         "t": 100,
         "active": true
+      }
+    },
+    {
+      "name": "status.set with a colour (RGB status LED)",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "a1b2c3d4-30",
+        "cmd": "status.set",
+        "name": "rgb",
+        "pattern": "blink",
+        "color": [
+          255,
+          120,
+          0
+        ]
+      }
+    },
+    {
+      "name": "status.set colour out of range",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "a1b2c3d4-31",
+        "cmd": "status.set",
+        "name": "rgb",
+        "pattern": "on",
+        "color": [
+          300,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "status.set colour needs three numbers",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "a1b2c3d4-32",
+        "cmd": "status.set",
+        "name": "rgb",
+        "pattern": "on",
+        "color": [
+          255,
+          0
+        ]
       }
     }
   ]

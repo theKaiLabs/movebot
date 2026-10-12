@@ -1,0 +1,15 @@
+id = "light-show"
+title = "Light show"
+summary = "Routes that move and light up together: a police car, a disco and a lighthouse."
+icon = "lights"
+level = 1
+minutes = 25
+concepts = ["routes with lights", "RGB colours", "timing with wait", "loops building a route"]
+requires = []
+needs = []
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+world = "ball_arena"
+lesson_style = "walkthrough"
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

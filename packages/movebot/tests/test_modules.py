@@ -59,7 +59,8 @@ def test_modules_are_listed_with_drivers(bot):
 def test_distance_sensor_sees_the_ball_getting_closer(bot):
     sensor = bot.modules.front_distance
     before = sensor.distance
-    assert before == pytest.approx(1.0 - 0.033, abs=0.01)  # blue ball 1 m ahead
+    # blue ball 1 m ahead; the sensor sits 6 cm in front of the robot's middle
+    assert before == pytest.approx(1.0 - 0.033 - 0.06, abs=0.01)
     bot.forward(0.5)
     assert sensor.distance == pytest.approx(before - 0.5, abs=0.02)
     assert sensor.distance_cm == pytest.approx(sensor.distance * 100)

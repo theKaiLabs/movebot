@@ -1,0 +1,10 @@
+id = "routes"
+title = "Routes: give the robot a whole plan"
+summary = "Send a list of moves in one go, check the plan before driving, and compare plan and reality."
+order = 4
+minutes = 25
+concepts = ["plans", "previewing", "drift", "running in the background"]
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

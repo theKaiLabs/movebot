@@ -90,11 +90,15 @@ def test_speed_percent_uses_the_bots_limits():
 def test_text_round_trip():
     text = (
         "forward 0.5; left; turn -30; back 0.2; arc 0.3 90; drive 0.1 10 2; wait 1; "
-        "lights on; led blink; speed 50; marker corner one; go_to 1 2; turn_to 45"
+        "lights on; led blink; rgb pulse #00ff80; speed 50; marker corner one; go_to 1 2; "
+        "turn_to 45"
     )
     route = Route.parse(text)
     assert Route.parse(route.to_text()).to_text() == route.to_text()
-    assert len(route) == 13
+    assert len(route) == 14
+    assert "rgb pulse #00ff80" in route.to_text()
+    (step,) = [c.step for c in route.compile(Pose()) if c.step.get("name") == "rgb"]
+    assert step == {"op": "status", "name": "rgb", "pattern": "pulse", "color": [0, 255, 128]}
 
 
 def test_parse_comments_newlines_and_logo_aliases():
@@ -107,7 +111,9 @@ def test_parse_comments_newlines_and_logo_aliases():
     assert route.to_text() == "forward 0.5; turn 90; forward 0.5; turn -45"
 
 
-@pytest.mark.parametrize("bad", ["fly 3", "forward", "forward far", "arc 1", "lights dim", "led"])
+@pytest.mark.parametrize(
+    "bad", ["fly 3", "forward", "forward far", "arc 1", "lights dim", "led", "rgb on glitter"]
+)
 def test_parse_errors_name_the_line(bad):
     with pytest.raises(ValueError, match="route line 1"):
         Route.parse(bad)

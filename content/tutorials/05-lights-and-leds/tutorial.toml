@@ -1,0 +1,10 @@
+id = "lights-and-leds"
+title = "Lights and LEDs"
+summary = "Headlights, the board's status LED and the RGB LED: patterns, colours and signals."
+order = 5
+minutes = 15
+concepts = ["outputs", "colours as red, green, blue", "patterns", "signalling"]
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

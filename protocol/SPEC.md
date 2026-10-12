@@ -53,7 +53,8 @@ Unknown fields MUST be ignored by both sides (forward compatibility).
  "geometry":{"wheel_diameter":0.065,"track_width":0.12,"ticks_per_rev":360},
  "limits":{"max_linear":0.4,"max_angular":4.0,"command_timeout_ms":500,"plan_queue":32,
            "plan_max_duration_ms":600000,"results_buffer":64,"max_clients":4},
- "capabilities":{"lights":["light_left","light_right"],"status_leds":["status"],
+ "capabilities":{"lights":["light_left","light_right"],"status_leds":["status","rgb"],
+                 "color_leds":["rgb"],
                  "status_patterns":["off","on","blink","blink_fast","pulse"],
                  "topics":["odom","encoders","power","net","status"],
                  "step_ops":["drive","turn","turn_to","arc","drive_for","wait","light","status","speed","marker","stop"],
@@ -111,7 +112,7 @@ Error codes: `bad_request`, `unknown_command`, `invalid_param`, `invalid_state`,
 | `odom.reset` | – | `x`, `y`, `yaw` (all 0) | |
 | `light.set` | `name` (from capabilities), `level` ∈ [0, 1] | `name`, `level` | |
 | `light.get` | – | `lights`: `{name: level}` | |
-| `status.set` | `name`, `pattern` ∈ off, on, blink, blink_fast, pulse | `name`, `pattern` | The bot animates patterns itself. |
+| `status.set` | `name`, `pattern` ∈ off, on, blink, blink_fast, pulse, optional `color` `[r, g, b]` (0-255) | `name`, `pattern` (+ `color` for colour LEDs) | The bot animates patterns itself. `color` only for LEDs listed in `capabilities.color_leds` (else `invalid_param`); without it a colour LED keeps its last colour. |
 | `wifi.status` | – | `mode` (`ap`/`sta`), `ssid`, `ip`, `rssi` | |
 | `wifi.set` | `ssid`, `password`, optional `ip`, `gateway`, `netmask` | `applied_on_reboot` | Static IP when `ip` is given. |
 | `wifi.reset_ap` | – | `applied_on_reboot` | Back to direct (AP) mode. |
@@ -126,6 +127,12 @@ Error codes: `bad_request`, `unknown_command`, `invalid_param`, `invalid_state`,
 
 Simulator-only commands use the `sim.` prefix (`sim.reboot`, `sim.fault`, `sim.truth`,
 `sim.drop_connections`, `sim.attach`, `sim.detach`). Real bots answer them with `unknown_command`.
+
+**Lights and LEDs on movebot-r1.** `light_left` / `light_right` are the headlights
+(brightness 0-1). `status` is the controller board's own LED (one colour) and `rgb` is the
+RGB status LED; both show patterns, and `rgb` also takes a colour. After boot `status` is `on`
+and `rgb` is `off` (colour white). The bot may use them itself only as documented here
+(the privacy indicator is a separate LED).
 
 ## 5. Manual control and arbitration
 
@@ -160,7 +167,7 @@ Every step has `seq` (integer ≥ 1) and `op`; optional `timeout_ms`.
 | `drive_for` | `v` (m/s), `w` (rad/s), `ms` | Velocity for a fixed time. |
 | `wait` | `ms` | Stand still. |
 | `light` | `name`, `level` | Instant. |
-| `status` | `name`, `pattern` | Instant. |
+| `status` | `name`, `pattern`, optional `color` | Instant. Same rules as `status.set`. |
 | `speed` | `linear` and/or `angular` | Instant. Changes the speed limit (like `speed.set`). |
 | `marker` | `label` (≤ 64 chars) | Instant. Emits `plan.marker`. |
 | `stop` | – | Instant. Brief stop between steps. |
@@ -348,7 +355,7 @@ disconnected) catches up with `plan.status` and `plan.results`.
 | `encoders` | `left`, `right`: `{ticks, speed}` |
 | `power` | `percent`, `voltage` |
 | `net` | `rssi` (dBm) |
-| `status` | `mode` (`idle`, `raw`, `velocity`, `plan`), `plan_state` (or null), `lights`, `status_leds`, `camera_streaming` |
+| `status` | `mode` (`idle`, `raw`, `velocity`, `plan`), `plan_state` (or null), `lights`, `status_leds`, `status_colors` (`{name: [r, g, b]}` for colour LEDs), `camera_streaming` |
 | `module.<id>` | `module_id`, `values` |
 
 ## 11. Relays

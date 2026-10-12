@@ -1,0 +1,11 @@
+id = "camera"
+title = "Looking through the camera"
+summary = "A picture is a grid of numbers: read pixels, save pictures and change them with numpy."
+order = 7
+minutes = 30
+concepts = ["images as arrays", "pixels and colour channels", "numpy", "brightness"]
+needs = ["camera"]
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

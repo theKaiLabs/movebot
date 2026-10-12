@@ -1,0 +1,15 @@
+id = "obstacle-avoider"
+title = "Obstacle avoider"
+summary = "Explore the room with the distance sensor: drive, see something, turn away, carry on."
+icon = "radar"
+level = 3
+minutes = 35
+concepts = ["sense-decide-act loop", "thresholds", "hysteresis", "states", "randomness"]
+requires = []
+needs = ["camera", "distance"]
+works_with = ["simulator", "movebot-r1 with a distance sensor"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+world = "ball_arena"
+lesson_style = "walkthrough"
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

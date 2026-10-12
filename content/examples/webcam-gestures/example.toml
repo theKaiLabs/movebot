@@ -1,0 +1,15 @@
+id = "webcam-gestures"
+title = "Webcam gestures"
+summary = "Steer the robot with hand gestures in front of your computer's webcam, learned from your own examples."
+icon = "hand"
+level = 4
+minutes = 45
+concepts = ["machine learning", "training data", "normalising", "k-nearest neighbours", "confidence threshold"]
+requires = ["vision"]
+needs = ["webcam on the computer"]
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+world = "ball_arena"
+lesson_style = "walkthrough"
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

@@ -21,6 +21,7 @@ from websockets.exceptions import InvalidHandshake
 
 from . import _studio
 from .camera import AsyncCamera
+from .colors import to_rgb
 from .connection import Connection
 from .errors import BotBusy, BotNotFound, BotTimeout, ConnectionLost
 from .models import Encoders, Pose, RouteResult, StepResult
@@ -140,6 +141,11 @@ class AsyncBot:
     @property
     def status_led_names(self) -> list[str]:
         return list(self.conn.hello.get("capabilities", {}).get("status_leds", []))
+
+    @property
+    def color_led_names(self) -> list[str]:
+        """Status LEDs that also take a colour (the RGB LED)."""
+        return list(self.conn.hello.get("capabilities", {}).get("color_leds", []))
 
     async def get_pose(self) -> Pose:
         return Pose.from_wire(await self.conn.request("odom.get"))
@@ -291,10 +297,16 @@ class AsyncBot:
             return self._lights.get(name, 0.0)
         return max(self._lights.values(), default=0.0)
 
-    async def set_status_led(self, pattern: str, name: str | None = None) -> None:
-        """``pattern`` is one of off, on, blink, blink_fast, pulse."""
+    async def set_status_led(
+        self, pattern: str, name: str | None = None, color: Any = None
+    ) -> None:
+        """``pattern`` is one of off, on, blink, blink_fast, pulse. ``color`` (a name such as
+        ``"red"``, ``"#ff8800"`` or ``(r, g, b)``) is for the RGB LED only."""
+        params: dict[str, Any] = {"pattern": pattern}
+        if color is not None:
+            params["color"] = list(to_rgb(color))
         for led in [name] if name else self.status_led_names:
-            await self.conn.request("status.set", name=led, pattern=pattern)
+            await self.conn.request("status.set", name=led, **params)
 
     # -- modules ---------------------------------------------------------------------------
 

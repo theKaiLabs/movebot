@@ -1,0 +1,15 @@
+id = "camera-explorer"
+title = "Camera explorer"
+summary = "Measure the camera live: picture size, pictures per second, delay, colours and brightness."
+icon = "camera"
+level = 2
+minutes = 25
+concepts = ["resolution", "frame rate", "latency", "average colour", "trade-offs"]
+requires = []
+needs = ["camera"]
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+world = "ball_arena"
+lesson_style = "walkthrough"
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

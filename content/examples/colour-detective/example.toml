@@ -1,0 +1,15 @@
+id = "colour-detective"
+title = "Colour detective"
+summary = "Click anything in the camera picture: get its colour, see similar pixels, and light the LED in it."
+icon = "palette"
+level = 2
+minutes = 30
+concepts = ["RGB and HSV", "hue", "masks", "percentages from True/False"]
+requires = ["vision"]
+needs = ["camera"]
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+world = "ball_arena"
+lesson_style = "walkthrough"
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

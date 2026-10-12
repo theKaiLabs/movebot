@@ -1,0 +1,11 @@
+id = "sensors"
+title = "Sensors and add-ons"
+summary = "Find the modules plugged into the robot, read a distance sensor, and react to what it measures."
+order = 8
+minutes = 25
+concepts = ["sensors", "while loops", "if statements", "thresholds", "add-on modules"]
+needs = ["distance"]
+works_with = ["simulator", "movebot-r1 with a distance sensor"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

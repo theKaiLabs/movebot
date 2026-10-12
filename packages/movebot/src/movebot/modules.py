@@ -168,9 +168,11 @@ class Modules:
         return sorted({*super().__dir__(), *self.ids()})
 
     def ids(self) -> list[str]:
+        """The ids of the modules plugged in, e.g. ``["front_distance", "imu"]``."""
         return list(self._bot._abot.module_descriptors)
 
     def of_type(self, type_name: str) -> list[Module]:
+        """Every module of one kind, e.g. ``bot.modules.of_type("distance")``."""
         return [m for m in self if m.type == type_name]
 
     def __repr__(self) -> str:

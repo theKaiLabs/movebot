@@ -41,6 +41,8 @@ class Bot:
         self._closed = False
         self.lights = Lights(self)
         self.status_led = StatusLed(self)
+        colour_leds = self._abot.color_led_names
+        self.rgb_led: RgbLed | None = RgbLed(self, colour_leds[0]) if colour_leds else None
         self.camera = Camera(self)
         self.modules = Modules(self)
         self.sim = SimControl(self) if self._abot.sim_server is not None else None
@@ -324,14 +326,20 @@ class Lights:
 
 
 class StatusLed:
-    """``bot.status_led.blink()``; patterns: off, on, blink, blink_fast, pulse."""
+    """The controller board's own LED: ``bot.status_led.blink()``.
+
+    Patterns: off, on, blink, blink_fast, pulse.
+    """
 
     def __init__(self, bot: Bot) -> None:
         self._bot = bot
+        names = bot._abot.status_led_names
+        plain = [n for n in names if n not in bot._abot.color_led_names]
+        self._name = "status" if "status" in names else (plain[0] if plain else None)
 
     def set(self, pattern: str) -> None:
         """Show a pattern: ``off``, ``on``, ``blink``, ``blink_fast`` or ``pulse``."""
-        self._bot._run(self._bot._abot.set_status_led(pattern))
+        self._bot._run(self._bot._abot.set_status_led(pattern, self._name))
 
     def on(self) -> None:
         """Light up."""
@@ -348,6 +356,39 @@ class StatusLed:
     def pulse(self) -> None:
         """Fade slowly in and out."""
         self.set("pulse")
+
+
+class RgbLed:
+    """The RGB status LED, in any colour: ``bot.rgb_led.on("green")``.
+
+    Colours: a name (red, orange, yellow, green, cyan, blue, purple, magenta, pink, white),
+    a code like ``"#ff8800"``, or ``(red, green, blue)`` with each 0-255. Without a colour
+    the LED keeps the last one.
+    """
+
+    def __init__(self, bot: Bot, name: str) -> None:
+        self._bot = bot
+        self._name = name
+
+    def set(self, pattern: str, color: Any = None) -> None:
+        """Show a pattern (``off``, ``on``, ``blink``, ``blink_fast``, ``pulse``) in a colour."""
+        self._bot._run(self._bot._abot.set_status_led(pattern, self._name, color))
+
+    def on(self, color: Any = None) -> None:
+        """Light up, e.g. ``on("blue")``."""
+        self.set("on", color)
+
+    def off(self) -> None:
+        """Go dark."""
+        self.set("off")
+
+    def blink(self, color: Any = None, fast: bool = False) -> None:
+        """Blink in a colour (``fast=True`` for quick blinks)."""
+        self.set("blink_fast" if fast else "blink", color)
+
+    def pulse(self, color: Any = None) -> None:
+        """Fade slowly in and out, in a colour."""
+        self.set("pulse", color)
 
 
 class Camera:

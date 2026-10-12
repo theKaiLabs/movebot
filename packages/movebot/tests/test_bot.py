@@ -195,6 +195,24 @@ def test_lights_status_and_speed(bot):
     bot.status_led.blink()
     bot.speed = 50
     assert bot.speed == pytest.approx(50)
+    sim = bot._abot.sim_server.bot
+    assert sim.status_leds["status"] == "blink"
+    assert sim.status_leds["rgb"] == "off"  # the board LED alone was changed
+
+
+def test_rgb_led_colours(bot):
+    sim = bot._abot.sim_server.bot
+    bot.rgb_led.on("green")
+    assert sim.status_leds["rgb"] == "on" and sim.status_colors["rgb"] == (0, 220, 0)
+    bot.rgb_led.blink("#ff8800", fast=True)
+    assert sim.status_leds["rgb"] == "blink_fast" and sim.status_colors["rgb"] == (255, 136, 0)
+    bot.rgb_led.pulse()  # keeps the colour
+    assert sim.status_colors["rgb"] == (255, 136, 0)
+    bot.route().rgb_led("on", (10, 20, 30)).run()
+    assert sim.status_colors["rgb"] == (10, 20, 30)
+    with pytest.raises(ValueError, match="unknown colour"):
+        bot.rgb_led.on("glitter")
+    bot.rgb_led.off()
 
 
 def test_markers_reach_callbacks(bot):

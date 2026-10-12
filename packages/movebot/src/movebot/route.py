@@ -13,10 +13,12 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import shlex
 from dataclasses import dataclass
 from typing import Any
 
+from .colors import to_rgb
 from .models import Pose
 from .protocol import wrap_angle
 
@@ -108,6 +110,11 @@ class Route:
     def status_led(self, pattern: str, *, name: str = "status") -> Route:
         """Show a status LED pattern: ``off``, ``on``, ``blink``, ``blink_fast``, ``pulse``."""
         return self._add("status_led", pattern=pattern, name=name)
+
+    def rgb_led(self, pattern: str = "on", color: Any = None, *, name: str = "rgb") -> Route:
+        """Set the RGB LED, e.g. ``.rgb_led("on", "green")`` or ``.rgb_led("blink", "red")``."""
+        rgb = list(to_rgb(color)) if color is not None else None
+        return self._add("status_led", pattern=pattern, name=name, color=rgb)
 
     def speed(self, percent: float) -> Route:
         """Change the speed limit for the rest of the route (percent of the bot's maximum)."""
@@ -212,10 +219,10 @@ class Route:
                     f"{op['name']} {op['level']:g}",
                 )
             elif kind == "status_led":
-                emit(
-                    {"op": "status", "name": op["name"], "pattern": op["pattern"]},
-                    f"status {op['pattern']}",
-                )
+                step = {"op": "status", "name": op["name"], "pattern": op["pattern"]}
+                if op.get("color") is not None:
+                    step["color"] = list(op["color"])
+                emit(step, f"{op['name']} {op['pattern']}")
             elif kind == "speed":
                 fraction = max(0.0, min(op["percent"], 100.0)) / 100
                 step = {
@@ -257,11 +264,11 @@ class Route:
     def parse(cls, text: str, bot: Any = None) -> Route:
         """Read a route written as text, one move per line or separated by ``;``.
 
-        Example: ``"forward 0.5; left; wait 1; lights on; go_to 1 0.5"``.
-        Lines starting with ``#`` are comments.
+        Example: ``"forward 0.5; left; wait 1; lights on; rgb on #00ff80; go_to 1 0.5"``.
+        ``#`` starts a comment (except in a colour code such as ``#ff8800``).
         """
         route = cls(bot)
-        lines = [ln.split("#", 1)[0] for ln in text.replace(";", "\n").splitlines()]
+        lines = [_COMMENT.split(ln, 1)[0] for ln in text.replace(";", "\n").splitlines()]
         for number, line in enumerate(lines, start=1):
             words = shlex.split(line)
             if not words:
@@ -291,6 +298,8 @@ def _maybe(step: dict[str, Any], key: str, value: float | None, convert: Any = N
         step[key] = convert(value) if convert else value
 
 
+_COMMENT = re.compile(r"#(?![0-9a-fA-F]{6}\b)")
+
 _OPS_FROM_JSON = {
     "forward", "turn", "turn_to", "arc", "drive", "go_to", "wait",
     "lights", "light", "status_led", "speed", "marker",
@@ -319,6 +328,10 @@ def _op_to_text(op: dict[str, Any]) -> str:
     if kind == "light":
         return f"light {op['name']} {op['level']:g}"
     if kind == "status_led":
+        if op.get("name") == "rgb" or op.get("color") is not None:
+            color = op.get("color")
+            code = "" if color is None else " #{:02x}{:02x}{:02x}".format(*color)
+            return f"rgb {op['pattern']}{code}"
         return f"led {op['pattern']}"
     if kind == "speed":
         return f"speed {op['percent']:g}"
@@ -377,6 +390,10 @@ def _parse_one(route: Route, name: str, args: list[str]) -> None:
         if len(args) != 1:
             raise ValueError("use 'led <off|on|blink|blink_fast|pulse>'")
         route.status_led(args[0])
+    elif name == "rgb":
+        if len(args) not in (1, 2):
+            raise ValueError("use 'rgb <off|on|blink|blink_fast|pulse> [colour]'")
+        route.rgb_led(args[0], args[1] if len(args) == 2 else None)
     elif name == "marker":
         if not args:
             raise ValueError("use 'marker <label>'")

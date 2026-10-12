@@ -1,0 +1,15 @@
+id = "room-scanner"
+title = "Room scanner"
+summary = "Spin on the spot with the distance sensor and draw a map of the walls and boxes around you."
+icon = "scan"
+level = 5
+minutes = 45
+concepts = ["mapping", "coordinate frames", "sine and cosine", "sensor noise", "odometry drift"]
+requires = []
+needs = ["distance"]
+works_with = ["simulator", "movebot-r1 with a distance sensor"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+world = "ball_arena"
+lesson_style = "walkthrough"
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"

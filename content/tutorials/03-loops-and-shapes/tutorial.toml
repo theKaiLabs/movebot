@@ -1,0 +1,10 @@
+id = "loops-and-shapes"
+title = "Loops and shapes"
+summary = "Repeat moves with a for loop and turn them into a function that draws any polygon."
+order = 3
+minutes = 25
+concepts = ["for loops", "functions", "parameters", "exterior angles"]
+works_with = ["simulator", "movebot-r1"]
+platforms = ["windows", "macos", "linux", "raspberry-pi"]
+authors = ["MoveBot team"]
+licence = "CC-BY-SA-4.0"
