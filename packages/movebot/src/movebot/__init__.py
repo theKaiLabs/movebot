@@ -22,8 +22,9 @@ from .errors import (
     MoveCancelled,
     MoveFailed,
     PlanLost,
+    WifiJoinFailed,
 )
-from .models import Encoders, Pose, RouteResult, StepResult
+from .models import Encoders, Pose, RouteResult, StepResult, WifiNetwork, WifiStatus, WifiTest
 from .protocol import PROTOCOL_VERSION
 from .route import Route
 
@@ -50,5 +51,9 @@ __all__ = [
     "RouteHandle",
     "RouteResult",
     "StepResult",
+    "WifiJoinFailed",
+    "WifiNetwork",
+    "WifiStatus",
+    "WifiTest",
     "__version__",
 ]

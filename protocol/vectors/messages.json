@@ -822,6 +822,150 @@
           0
         ]
       }
+    },
+    {
+      "name": "wifi.set: join a network and keep the bot's own as a backup",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-40",
+        "cmd": "wifi.set",
+        "mode": "ap+sta",
+        "ssid": "Classroom",
+        "password": "robots123",
+        "fallback_ap": true
+      }
+    },
+    {
+      "name": "wifi.set: network mode with a static address",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-41",
+        "cmd": "wifi.set",
+        "mode": "sta",
+        "ssid": "Lab",
+        "password": "secret99",
+        "ip": "192.168.10.20",
+        "netmask": "255.255.255.0",
+        "gateway": "192.168.10.1"
+      }
+    },
+    {
+      "name": "wifi.set: direct mode with a new password",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-42",
+        "cmd": "wifi.set",
+        "mode": "ap",
+        "ap_password": "classroom7",
+        "ap_channel": 6
+      }
+    },
+    {
+      "name": "wifi.set: the bot's own password is too short",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-43",
+        "cmd": "wifi.set",
+        "mode": "ap",
+        "ap_password": "short"
+      }
+    },
+    {
+      "name": "wifi.set: an unknown mode",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-44",
+        "cmd": "wifi.set",
+        "mode": "mesh"
+      }
+    },
+    {
+      "name": "wifi.set: a static address that is not an address",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-45",
+        "cmd": "wifi.set",
+        "mode": "sta",
+        "ssid": "Lab",
+        "ip": "192.168.1.300"
+      }
+    },
+    {
+      "name": "wifi.test: try a network before saving it",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-46",
+        "cmd": "wifi.test",
+        "ssid": "Classroom",
+        "password": "robots123",
+        "timeout_ms": 15000
+      }
+    },
+    {
+      "name": "wifi.test needs an ssid",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-47",
+        "cmd": "wifi.test",
+        "password": "x"
+      }
+    },
+    {
+      "name": "wifi.scan",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-48",
+        "cmd": "wifi.scan"
+      }
+    },
+    {
+      "name": "device.set: rename the bot",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-49",
+        "cmd": "device.set",
+        "name": "Rover 7"
+      }
+    },
+    {
+      "name": "device.set: names are short and simple",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-50",
+        "cmd": "device.set",
+        "name": "Robot/One!"
+      }
+    },
+    {
+      "name": "system.restart",
+      "valid": true,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-51",
+        "cmd": "system.restart",
+        "delay_ms": 500
+      }
+    },
+    {
+      "name": "system.restart: at most 5 s delay",
+      "valid": false,
+      "message": {
+        "type": "req",
+        "id": "c0ffee00-52",
+        "cmd": "system.restart",
+        "delay_ms": 60000
+      }
     }
   ]
 }

@@ -74,6 +74,14 @@ class MoveCancelled(MoveBotError):
     """A move was cancelled (``bot.stop()``, a route was cancelled, ...)."""
 
 
+class WifiJoinFailed(MoveBotError):
+    """The bot could not join a Wi-Fi network. ``reason`` says why (see ``WifiTest``)."""
+
+    def __init__(self, message: str, *, reason: str | None = None) -> None:
+        super().__init__(message)
+        self.reason = reason
+
+
 _FRIENDLY = {
     "busy": "MoveBot is busy: {msg}. Wait for the current move to finish, or call bot.stop().",
     "invalid_param": "MoveBot did not accept a value: {msg}",

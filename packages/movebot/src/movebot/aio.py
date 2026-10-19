@@ -24,7 +24,15 @@ from .camera import AsyncCamera
 from .colors import to_rgb
 from .connection import Connection
 from .errors import BotBusy, BotNotFound, BotTimeout, ConnectionLost
-from .models import Encoders, Pose, RouteResult, StepResult
+from .models import (
+    Encoders,
+    Pose,
+    RouteResult,
+    StepResult,
+    WifiNetwork,
+    WifiStatus,
+    WifiTest,
+)
 from .plans import Plan
 from .protocol import DEFAULT_BOT_HOST, DEFAULT_LOCAL_PORT, WS_PATH
 from .route import CompiledStep, Route
@@ -307,6 +315,62 @@ class AsyncBot:
             params["color"] = list(to_rgb(color))
         for led in [name] if name else self.status_led_names:
             await self.conn.request("status.set", name=led, **params)
+
+    # -- setting up: Wi-Fi, name, restart (SPEC §12) -----------------------------------------
+
+    async def wifi_status(self) -> WifiStatus:
+        """How the bot is connected now, and what is saved for its next start."""
+        return WifiStatus.from_wire(await self.conn.request("wifi.status"))
+
+    async def wifi_scan(self, timeout: float = 4.0) -> list[WifiNetwork]:
+        """The Wi-Fi networks the bot can see, strongest first."""
+        ms = round(min(max(timeout, 0.5), 10.0) * 1000)
+        found = await self.conn.request("wifi.scan", timeout_ms=ms, timeout=timeout + 5)
+        return [
+            WifiNetwork(str(n["ssid"]), int(n["rssi"]), str(n["security"]), n.get("channel"))
+            for n in found.get("networks", [])
+        ]
+
+    async def wifi_test(
+        self, ssid: str, password: str = "", *, static: dict[str, str] | None = None,
+        timeout: float = 15.0,
+    ) -> WifiTest:  # fmt: skip
+        """Let the bot try a network without changing anything (it stays reachable)."""
+        ms = round(min(max(timeout, 1.0), 20.0) * 1000)
+        result = await self.conn.request(
+            "wifi.test", ssid=ssid, password=password, timeout_ms=ms, timeout=timeout + 5,
+            **(static or {}),
+        )  # fmt: skip
+        return WifiTest(bool(result.get("joined")), result.get("ip"), result.get("rssi"),
+                        result.get("reason"))  # fmt: skip
+
+    async def wifi_save(self, **settings: Any) -> dict[str, Any]:
+        """Save Wi-Fi settings (the ``wifi.set`` fields); they apply after a restart."""
+        return (await self.conn.request("wifi.set", **settings))["saved"]
+
+    async def wifi_reset(self) -> dict[str, Any]:
+        """Back to factory Wi-Fi settings (its own network); applies after a restart."""
+        return (await self.conn.request("wifi.reset_ap"))["saved"]
+
+    async def rename(self, name: str) -> None:
+        """Give the bot a new name (also of its own network); applies after a restart."""
+        await self.conn.request("device.set", name=name)
+
+    async def restart(self, *, wait: bool = True, timeout: float = 20.0) -> None:
+        """Restart the bot. With ``wait``, return once it is back and connected again."""
+        before = self.conn.boot_id
+        await self.conn.request("system.restart", delay_ms=300)
+        if not wait:
+            return
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + timeout
+        while not (self.conn.connected and self.conn.boot_id != before):
+            if loop.time() > deadline:
+                raise ConnectionLost(
+                    "MoveBot restarted but did not come back on this network. If it joined "
+                    "another Wi-Fi network, connect this computer to that network too."
+                )
+            await asyncio.sleep(0.2)
 
     # -- modules ---------------------------------------------------------------------------
 

@@ -76,14 +76,36 @@ def position():
 app.run()                              # opens the browser; Ctrl+C to stop
 ```
 
-Also: `toggle`, `slider`, `select`, `input`, `keyboard`, `text`, `meter`, `plot`, `log`,
+Also: `toggle`, `slider`, `select`, `input`, `dpad`, `keyboard`, `text`, `meter`, `plot`,
+`map`, `log`,
 `markdown`, and `row` / `column` / `card` for layout. `app.start()` instead of `app.run()`
 keeps your own loop running next to the screen (see the follow-the-ball example). The
 **</> Code** button on the page shows which line made each part.
 
+## Wi-Fi and setting up
+
+A new bot runs its own Wi-Fi (`MoveBot-XXXX`, at `192.168.4.1`). It can also join your
+network, so your computer keeps its internet (guide: `docs/connecting.md`):
+
+```python
+print(bot.wifi.status())                     # how it is connected now
+for network in bot.wifi.scan():
+    print(network)
+print(bot.wifi.test("Classroom", "password").message)   # try without changing anything
+bot.wifi.join("Classroom", "password")       # tests, saves and restarts; keeps its own Wi-Fi on too
+bot.wifi.join("Lab", "pw", keep_hotspot=False, static_ip="192.168.10.20/24", gateway="192.168.10.1")
+bot.wifi.hotspot(password="new password")    # only its own Wi-Fi
+bot.wifi.reset()                             # factory Wi-Fi settings
+bot.rename("Rover 7", restart=True)
+bot.restart()
+```
+
 ## Command line
 
 ```
+movebot wifi status | scan | join SSID | hotspot | reset
+movebot rename "Rover 7"
+movebot restart
 movebot sim                      # run a simulated bot on this computer (MoveBot app)
 movebot sim --module imu         # ... with a simulated IMU
 movebot panel                    # ready-made control panel (MoveBot app)

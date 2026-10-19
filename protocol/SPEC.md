@@ -17,8 +17,8 @@ The key words MUST, SHOULD and MAY are used as in RFC 2119.
 |---|---|---|
 | Control and telemetry | WebSocket `ws://<bot>:80/ws`, text frames | One JSON object per frame, UTF-8, no NaN/Infinity. |
 | Video | MJPEG over HTTP, `http://<bot>:<stream_port>/stream` (port 81 on the bot) | See §7. `hello.capabilities.camera` is `false` when there is no camera. |
-| Direct mode | Bot runs an access point `MoveBot-XXXX`, bot address `192.168.4.1` | Classroom default. |
-| Network mode | Bot joins a Wi-Fi network | Discovery via mDNS `_movebot._tcp` (to be specified in v0.2). |
+| Direct mode | Bot runs an access point named like the bot (`MoveBot-XXXX`), bot address `192.168.4.1` | Classroom default. See §12. |
+| Network mode | Bot joins a Wi-Fi network | Found by its mDNS hostname `<hostname>.local` (§12.4). |
 
 * A bot MUST accept at least `limits.max_clients` simultaneous connections (≥ 1, recommended 2–4).
   It MUST refuse more with WebSocket close code **1013** before sending `hello`.
@@ -113,9 +113,13 @@ Error codes: `bad_request`, `unknown_command`, `invalid_param`, `invalid_state`,
 | `light.set` | `name` (from capabilities), `level` ∈ [0, 1] | `name`, `level` | |
 | `light.get` | – | `lights`: `{name: level}` | |
 | `status.set` | `name`, `pattern` ∈ off, on, blink, blink_fast, pulse, optional `color` `[r, g, b]` (0-255) | `name`, `pattern` (+ `color` for colour LEDs) | The bot animates patterns itself. `color` only for LEDs listed in `capabilities.color_leds` (else `invalid_param`); without it a colour LED keeps its last colour. |
-| `wifi.status` | – | `mode` (`ap`/`sta`), `ssid`, `ip`, `rssi` | |
-| `wifi.set` | `ssid`, `password`, optional `ip`, `gateway`, `netmask` | `applied_on_reboot` | Static IP when `ip` is given. |
-| `wifi.reset_ap` | – | `applied_on_reboot` | Back to direct (AP) mode. |
+| `wifi.status` | – | §12.2 | Never contains a password. |
+| `wifi.scan` | optional `timeout_ms` | `networks` | §12.2 |
+| `wifi.test` | `ssid`, `password`, optional static address, `timeout_ms` | `joined`, `ip`, `rssi`, `reason` | §12.2. The current connection stays up. |
+| `wifi.set` | `mode` and the settings for it | `saved`, `applied_on_reboot` | §12.2 |
+| `wifi.reset_ap` | – | `saved`, `applied_on_reboot` | Factory Wi-Fi settings: direct mode, the network is forgotten. |
+| `device.set` | `name` | `name`, `applied_on_reboot` | §12.3 |
+| `system.restart` | optional `delay_ms` | `restarting` | §12.3 |
 | `camera.get` | – | `preset`, `resolution`, `fps`, `quality`, `streaming` | §7. `not_supported` without a camera. |
 | `camera.set` | `preset` and/or `resolution`, `fps`, `quality` | as `camera.get` | §7. |
 | `module.list` | – | `modules` | Same list as `hello.modules` (§8). |
@@ -384,7 +388,93 @@ is indistinguishable from a bot. The conformance suite is run through the refere
 * SHOULD open the bot's camera stream only while a local client is watching and share it
   between all local viewers.
 
-## 12. Open items for v0.2
+## 12. Setting up the bot: Wi-Fi, name, restart
 
-mDNS service and TXT record · signed OTA (`ota.*`) ·
-optional pairing token · `repeat` step · step blending · binary encoding.
+### 12.1 Wi-Fi modes
+
+| `mode` | The bot… | Good for |
+|---|---|---|
+| `ap` | runs its own network (direct mode), WPA2 with the password printed on the bot, at `192.168.4.1` | Classrooms: works anywhere, no router, no school network rules. The computer joins the bot's network (and is then offline). |
+| `sta` | joins an existing network (network mode) | Home, or school networks that let devices talk to each other. The computer keeps its internet. |
+| `ap+sta` | does both: joins a network **and** keeps its own as a way in | Setting up, and networks you are not sure about. |
+
+* A bot MUST start in `ap` mode when it has no saved network (first start, after `wifi.reset_ap`).
+* With `fallback_ap: true` (the default) a bot in `sta` mode that cannot join its network
+  within 30 s after booting, or loses it for 60 s, MUST also start its own network, so it can
+  always be reached and set up again. It keeps trying to join in the background.
+* Settings are saved in flash and take effect when the bot restarts (`system.restart`), never
+  in the middle of a connection. A bot SHOULD offer a physical way back to factory Wi-Fi
+  settings (e.g. holding the button for 5 s) in case the settings lock everyone out.
+
+### 12.2 Commands
+
+**`wifi.status`** – what is running now, and what is saved for the next start:
+
+```json
+{"mode":"ap+sta", "ssid":"Classroom", "ip":"192.168.1.57", "rssi":-48,
+ "hostname":"movebot-3f1a2b",
+ "ap":{"ssid":"MoveBot-1A2B","ip":"192.168.4.1","security":"wpa2","channel":6,"clients":1},
+ "sta":{"ssid":"Classroom","state":"connected","ip":"192.168.1.57","gateway":"192.168.1.1",
+        "rssi":-48,"static":false,"reason":null},
+ "saved":{"mode":"ap+sta","ssid":"Classroom","has_password":true,"static_ip":null,
+          "fallback_ap":true,"ap_ssid":"MoveBot-1A2B","ap_security":"wpa2","ap_channel":6},
+ "pending_restart":false}
+```
+
+* `ssid`, `ip`, `rssi` describe the main way in: the joined network if connected, else the
+  bot's own (with `rssi` null). `ap` / `sta` are `null` when that side is off.
+* `sta.state` is `connecting`, `connected` or `failed`, with `reason` (see `wifi.test`).
+* `pending_restart` is true when `saved` differs from what is running.
+* The response MUST NOT contain a password, only `has_password`.
+
+**`wifi.scan`** (`timeout_ms` ≤ 10000, default 4000) – networks in range:
+`networks: [{ssid, rssi, security, channel}]`, strongest first, each `ssid` once (the
+strongest), hidden networks left out. `security` is `open`, `wpa`, `wpa2`, `wpa3` or
+`enterprise`. The bot's own network stays up while it scans.
+
+**`wifi.test`** – try to join a network **without** changing anything: `ssid`, `password`
+(`""` for an open network), optional `ip` / `netmask` / `gateway` / `dns` for a static
+address, `timeout_ms` ≤ 20000 (default 15000). The bot joins in `ap+sta`, reads its address,
+and leaves again, so the client's connection is not lost. Result: `joined` (true/false),
+`ip`, `rssi`, and `reason` when it failed: `not_found`, `wrong_password`, `no_ip` (joined
+but got no address), `timeout`, `unsupported` (e.g. enterprise networks). Clients SHOULD test
+before saving a network.
+
+**`wifi.set`** – save new settings (they apply after `system.restart`):
+
+| Parameter | For | Meaning |
+|---|---|---|
+| `mode` | all | `ap`, `sta` or `ap+sta` (required; for backwards compatibility `sta` is assumed when it is missing and `ssid` is given) |
+| `ssid`, `password` | `sta`, `ap+sta` | The network to join. `password` `""` = open; leaving `password` out keeps the saved one if `ssid` is the saved network. |
+| `ip`, `netmask`, `gateway`, `dns` | `sta`, `ap+sta` | Optional static address: `ip`, `netmask` and `gateway` together, or none (then DHCP). |
+| `fallback_ap` | `sta` | Default `true` (§12.1). |
+| `ap_password` | all | The bot's own network: 8–63 characters, or `""` for an open network (not recommended). Leaving it out keeps the current one. |
+| `ap_channel` | all | 1–13. |
+
+Result: `saved` (as in `wifi.status`) and `applied_on_reboot: true`. Invalid combinations
+(a `sta` mode without `ssid`, half a static address, a short `ap_password`) fail with
+`invalid_param` and change nothing.
+
+### 12.3 Name and restart
+
+* **`device.set`** `name`: 1–24 characters, letters, digits, spaces, `-` and `_`. It becomes
+  `hello.name` and the name of the bot's own network after the next restart. Result: `name`,
+  `applied_on_reboot: true`.
+* **`system.restart`** `delay_ms` (0–5000, default 500): the bot answers `restarting: true`,
+  waits, closes every connection with close code **1012** and restarts (new `boot_id`).
+
+### 12.4 Finding a bot on a network
+
+In `sta` and `ap+sta` mode a bot MUST answer mDNS queries for `<hostname>.local`, where the
+hostname is `movebot-<bot_id>` (lower case), so it can be reached without knowing its
+address. It SHOULD also announce the service `_movebot._tcp` on port 80 with TXT records
+`id=<bot_id>`, `name=<name>` and `proto=<protocol version>`. Many school networks block mDNS:
+clients SHOULD let users type an address, and SHOULD show the address `wifi.test` reported.
+
+Wi-Fi passwords travel inside the bot's WPA2 network or the local network. A pairing token
+(only a known client may change settings) is planned for v0.2.
+
+## 13. Open items for v0.2
+
+optional pairing token · signed OTA (`ota.*`) ·
+`repeat` step · step blending · binary encoding · provisioning over USB or Bluetooth.

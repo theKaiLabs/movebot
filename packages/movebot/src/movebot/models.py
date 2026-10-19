@@ -136,3 +136,114 @@ class RouteResult:
             lines.append(f"{i + 1:>3}  {self.labels[i]:<22} {result:<9} {expected!s:<34} {actual}")
         lines.append(f"drift at the end: {self.drift * 100:.1f} cm")
         return "\n".join(lines)
+
+
+# -- Wi-Fi (SPEC §12) ---------------------------------------------------------------------
+
+WIFI_REASONS = {
+    "not_found": "the network was not found (is the name right, and is it in range?)",
+    "wrong_password": "the password is wrong",
+    "no_ip": "it joined but did not get an address (check the static address settings)",
+    "timeout": "the network did not answer in time",
+    "unsupported": "the robot cannot join this kind of network (e.g. one that needs a user name)",
+}
+
+
+@dataclass(frozen=True)
+class WifiNetwork:
+    """A Wi-Fi network the bot can see: ``ssid`` (its name), ``rssi`` (signal strength in dBm:
+    -40 is very strong, -80 weak), ``security`` (open, wpa, wpa2, wpa3 or enterprise)."""
+
+    ssid: str
+    rssi: int
+    security: str
+    channel: int | None = None
+
+    @property
+    def bars(self) -> int:
+        """Signal strength as 0-4 bars, like on a phone."""
+        return max(0, min(4, (self.rssi + 95) // 10))
+
+    @property
+    def needs_password(self) -> bool:
+        """True unless the network is open."""
+        return self.security != "open"
+
+    def __str__(self) -> str:
+        lock = "" if self.security == "open" else " (password)"
+        return f"{self.ssid}  {'▮' * self.bars}{'▯' * (4 - self.bars)}{lock}"
+
+
+@dataclass(frozen=True)
+class WifiTest:
+    """What happened when the bot tried a network: ``joined``, its ``ip`` there, ``reason``."""
+
+    joined: bool
+    ip: str | None = None
+    rssi: int | None = None
+    reason: str | None = None
+
+    @property
+    def message(self) -> str:
+        """A sentence about the result, for people."""
+        if self.joined:
+            return f"joined, the robot's address there is {self.ip}"
+        return WIFI_REASONS.get(self.reason or "", f"it did not work ({self.reason})")
+
+
+@dataclass(frozen=True)
+class WifiStatus:
+    """How the bot is connected now, and what it will do after its next restart.
+
+    ``mode``: ``"ap"`` (its own network, direct mode), ``"sta"`` (it joined a network) or
+    ``"ap+sta"`` (both). ``ssid``/``ip``: the main way to reach it. ``hostname``: its name on
+    a network (``<hostname>.local``). ``saved``: the settings for the next start (no
+    passwords). ``pending_restart``: the saved settings are not in use yet.
+    """
+
+    mode: str
+    ssid: str | None
+    ip: str | None
+    rssi: int | None
+    hostname: str | None
+    hotspot: dict[str, Any] | None  # the bot's own network, or None when it is off
+    network: dict[str, Any] | None  # the network it joined (or tried to), or None
+    saved: dict[str, Any]
+    pending_restart: bool
+
+    @classmethod
+    def from_wire(cls, data: dict[str, Any]) -> WifiStatus:
+        return cls(
+            mode=str(data.get("mode", "ap")),
+            ssid=data.get("ssid"),
+            ip=data.get("ip"),
+            rssi=data.get("rssi"),
+            hostname=data.get("hostname"),
+            hotspot=data.get("ap"),
+            network=data.get("sta"),
+            saved=dict(data.get("saved") or {}),
+            pending_restart=bool(data.get("pending_restart", False)),
+        )
+
+    @property
+    def address(self) -> str | None:
+        """What to type to reach the bot on its network: ``movebot-xxxx.local``, or its IP."""
+        if self.network and self.network.get("state") == "connected":
+            return f"{self.hostname}.local" if self.hostname else self.network.get("ip")
+        return self.ip
+
+    def __str__(self) -> str:
+        if self.network and self.network.get("state") == "connected":
+            text = f"on the network {self.network['ssid']} at {self.network['ip']}"
+            if self.hotspot:
+                text += f", and its own network {self.hotspot['ssid']}"
+        elif self.network:
+            reason = WIFI_REASONS.get(self.network.get("reason") or "", "it could not join")
+            text = f"could not join {self.network['ssid']} ({reason})"
+            if self.hotspot:
+                text += f"; its own network {self.hotspot['ssid']} is on"
+        else:
+            text = f"its own network {self.ssid} at {self.ip}"
+        if self.pending_restart:
+            text += " (new settings wait for a restart)"
+        return text

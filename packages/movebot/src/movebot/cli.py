@@ -59,6 +59,32 @@ def main(argv: list[str] | None = None) -> int:
     p_route.add_argument("--target", default=None)
     p_route.add_argument("--preview", action="store_true", help="only print the expected poses")
 
+    p_wifi = sub.add_parser("wifi", help="set up how the bot connects (its own Wi-Fi or yours)")
+    p_wifi.add_argument("--target", default=None, help="the bot's address (default: search)")
+    wifi = p_wifi.add_subparsers(dest="wifi_command", required=True)
+    wifi.add_parser("status", help="how the bot is connected now")
+    wifi.add_parser("scan", help="the networks the bot can see")
+    w_join = wifi.add_parser(
+        "join", help="make the bot join a Wi-Fi network (asks for the password)"
+    )
+    w_join.add_argument("ssid", help="the network's name")
+    w_join.add_argument("--no-hotspot", action="store_true",
+                        help="turn the bot's own network off (default: keep it on)")  # fmt: skip
+    w_join.add_argument("--static-ip", default=None, metavar="IP/BITS", help="e.g. 192.168.1.20/24")
+    w_join.add_argument("--gateway", default=None)
+    w_join.add_argument("--dns", default=None)
+    w_join.add_argument("--open", action="store_true", help="the network has no password")
+    w_hot = wifi.add_parser("hotspot", help="use only the bot's own network (direct mode)")
+    w_hot.add_argument("--change-password", action="store_true", help="choose a new password")
+    wifi.add_parser("reset", help="factory Wi-Fi settings (the password on the bot's label)")
+
+    p_rename = sub.add_parser("rename", help="give the bot a new name (and its network)")
+    p_rename.add_argument("name")
+    p_rename.add_argument("--target", default=None)
+
+    p_restart = sub.add_parser("restart", help="restart the bot")
+    p_restart.add_argument("--target", default=None)
+
     sub.add_parser("version", help="print versions")
 
     args = parser.parse_args(argv)
@@ -182,6 +208,65 @@ def _route(args: argparse.Namespace) -> int:
     return 0
 
 
+def _wifi(args: argparse.Namespace) -> int:
+    import getpass
+
+    from .bot import Bot
+
+    with Bot(args.target) as bot:
+        command = args.wifi_command
+        if command == "status":
+            status = bot.wifi.status()
+            print(f"{bot.name}: {status}")
+            if status.address:
+                print(f"Reach it at: {status.address}")
+        elif command == "scan":
+            for network in bot.wifi.scan():
+                print(network)
+        elif command == "join":
+            password = "" if args.open else getpass.getpass(f"Password for {args.ssid}: ")
+            print(f"Trying {args.ssid}…")
+            result = bot.wifi.join(
+                args.ssid, password, keep_hotspot=not args.no_hotspot, static_ip=args.static_ip,
+                gateway=args.gateway, dns=args.dns,
+            )  # fmt: skip
+            print(f"Done: {bot.name} {result.message if result else 'saved the network'}.")
+            hostname = bot.wifi.status().hostname if not args.no_hotspot else None
+            if args.no_hotspot:
+                print(f"Connect this computer to {args.ssid}, then use the robot's address "
+                      f"({result.ip if result else 'see its screen'}).")  # fmt: skip
+            elif hostname:
+                print(f"On {args.ssid} it is {hostname}.local; its own network stays on too.")
+        elif command == "hotspot":
+            password = None
+            if args.change_password:
+                password = getpass.getpass("New password for the bot's network (8+ characters): ")
+            bot.wifi.hotspot(password=password)
+            print(f"{bot.name} now uses only its own network. Connect this computer to it.")
+        elif command == "reset":
+            bot.wifi.reset()
+            print("Factory Wi-Fi settings: the bot's own network, with the password on its label.")
+    return 0
+
+
+def _rename(args: argparse.Namespace) -> int:
+    from .bot import Bot
+
+    with Bot(args.target) as bot:
+        bot.rename(args.name, restart=True)
+        print(f"The bot is now called {bot.name}.")
+    return 0
+
+
+def _restart(args: argparse.Namespace) -> int:
+    from .bot import Bot
+
+    with Bot(args.target) as bot:
+        bot.restart()
+        print(f"{bot.name} restarted.")
+    return 0
+
+
 def _version(args: argparse.Namespace) -> int:
     print(f"movebot {__version__} (protocol {PROTOCOL_VERSION})")
     return 0
@@ -194,6 +279,9 @@ _COMMANDS = {
     "info": _info,
     "shell": _shell,
     "route": _route,
+    "wifi": _wifi,
+    "rename": _rename,
+    "restart": _restart,
     "version": _version,
 }
 

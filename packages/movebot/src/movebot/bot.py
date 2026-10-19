@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import atexit
 import contextlib
+import ipaddress
 import weakref
 from collections.abc import Callable
 from typing import Any
@@ -12,7 +13,8 @@ from . import _studio
 from ._runtime import LoopThread
 from .aio import AsyncBot, AsyncRouteHandle
 from .camera import CameraFrame
-from .models import Encoders, Pose, RouteResult, StepResult
+from .errors import WifiJoinFailed
+from .models import Encoders, Pose, RouteResult, StepResult, WifiNetwork, WifiStatus, WifiTest
 from .modules import Modules
 from .plans import Plan
 from .route import Route
@@ -45,6 +47,7 @@ class Bot:
         self.rgb_led: RgbLed | None = RgbLed(self, colour_leds[0]) if colour_leds else None
         self.camera = Camera(self)
         self.modules = Modules(self)
+        self.wifi = Wifi(self)
         self.sim = SimControl(self) if self._abot.sim_server is not None else None
         ref = weakref.ref(self)
         atexit.register(lambda: (bot := ref()) is not None and bot.close())
@@ -227,6 +230,22 @@ class Bot:
 
     # -- events --------------------------------------------------------------------------
 
+    # -- setting up ------------------------------------------------------------------------
+
+    def rename(self, name: str, *, restart: bool = False) -> None:
+        """Give the bot a new name, e.g. ``bot.rename("Rover 7")``.
+
+        The name is also the name of the bot's own Wi-Fi network. It is used from the next
+        restart (``restart=True`` restarts straight away).
+        """
+        self._run(self._abot.rename(name))
+        if restart:
+            self.restart()
+
+    def restart(self, *, wait: bool = True) -> None:
+        """Restart the bot (like switching it off and on). Waits until it is back."""
+        self._run(self._abot.restart(wait=wait), timeout=30)
+
     def on(self, event: str, callback: Callable[[Any], Any]) -> None:
         """Run ``callback(data)`` when ``event`` happens.
 
@@ -389,6 +408,141 @@ class RgbLed:
     def pulse(self, color: Any = None) -> None:
         """Fade slowly in and out, in a colour."""
         self.set("pulse", color)
+
+
+class Wifi:
+    """How the bot connects: its own network, or a Wi-Fi network you already have.
+
+    >>> print(bot.wifi.status())                   # how it is connected now
+    >>> for network in bot.wifi.scan(): print(network)
+    >>> bot.wifi.join("Classroom", "the password")  # tries it first, then restarts the bot
+    >>> bot.wifi.hotspot()                         # back to its own network only
+
+    **Its own network** (direct mode, the default): the computer joins the robot's network
+    (``MoveBot-XXXX``, password on the robot). Works anywhere, but that computer has no
+    internet while connected. **Joining a network**: the robot joins your Wi-Fi, so the
+    computer keeps its internet; the robot is then at ``movebot-xxxx.local`` (or the address
+    ``status()`` shows). Some school networks do not let devices talk to each other.
+
+    New settings are saved on the robot and used from its next restart.
+    """
+
+    def __init__(self, bot: Bot) -> None:
+        self._bot = bot
+
+    def status(self) -> WifiStatus:
+        """How the bot is connected now (``mode``, ``ssid``, ``ip``, ``address``, ...)."""
+        return self._bot._run(self._bot._abot.wifi_status())
+
+    def scan(self) -> list[WifiNetwork]:
+        """The networks the bot can see, strongest first."""
+        return self._bot._run(self._bot._abot.wifi_scan(), timeout=20)
+
+    def test(
+        self,
+        ssid: str,
+        password: str = "",
+        *,
+        static_ip: str | None = None,
+        gateway: str | None = None,
+        dns: str | None = None,
+    ) -> WifiTest:
+        """Let the bot try to join ``ssid`` without changing anything.
+
+        ``result.joined`` says if it worked, ``result.ip`` is the bot's address there and
+        ``result.message`` explains what went wrong.
+        """
+        static = _static_address(static_ip, gateway, dns)
+        return self._bot._run(self._bot._abot.wifi_test(ssid, password, static=static), timeout=40)
+
+    def join(
+        self,
+        ssid: str,
+        password: str = "",
+        *,
+        keep_hotspot: bool = True,
+        static_ip: str | None = None,
+        gateway: str | None = None,
+        dns: str | None = None,
+        fallback: bool = True,
+        test: bool = True,
+        restart: bool = True,
+    ) -> WifiTest | None:
+        """Make the bot join a Wi-Fi network.
+
+        - ``keep_hotspot``: keep the bot's own network on too (the safest while you set up).
+        - ``static_ip``: a fixed address like ``"192.168.1.20/24"``, with ``gateway``
+          (and optionally ``dns``); without it the network gives the bot an address.
+        - ``fallback``: if it cannot join, the bot turns its own network back on.
+        - ``test``: try the network first and raise ``WifiJoinFailed`` if it does not work,
+          so nothing is saved by mistake.
+        - ``restart``: restart the bot now so it joins. If its own network is turned off,
+          connect this computer to ``ssid`` and use ``Bot("<hostname>.local")`` afterwards.
+
+        Returns the test result (with the bot's new ``ip``) when ``test=True``.
+        """
+        static = _static_address(static_ip, gateway, dns)
+        result = None
+        if test:
+            result = self.test(ssid, password, static_ip=static_ip, gateway=gateway, dns=dns)
+            if not result.joined:
+                raise WifiJoinFailed(
+                    f"MoveBot could not join {ssid!r}: {result.message}. Nothing was changed.",
+                    reason=result.reason,
+                )
+        mode = "ap+sta" if keep_hotspot else "sta"
+        self._bot._run(
+            self._bot._abot.wifi_save(
+                mode=mode, ssid=ssid, password=password, fallback_ap=fallback, **(static or {})
+            )
+        )
+        if restart:
+            self._bot.restart(wait=keep_hotspot)
+        return result
+
+    def hotspot(
+        self, *, password: str | None = None, channel: int | None = None, restart: bool = True
+    ) -> None:
+        """Use only the bot's own network (direct mode).
+
+        ``password`` changes the password of its network (at least 8 characters).
+        """
+        settings: dict[str, Any] = {"mode": "ap"}
+        if password is not None:
+            settings["ap_password"] = password
+        if channel is not None:
+            settings["ap_channel"] = channel
+        self._bot._run(self._bot._abot.wifi_save(**settings))
+        if restart:
+            self._bot.restart(wait=False)
+
+    def reset(self, *, restart: bool = True) -> None:
+        """Factory Wi-Fi settings: the bot's own network with the password on its label."""
+        self._bot._run(self._bot._abot.wifi_reset())
+        if restart:
+            self._bot.restart(wait=False)
+
+
+def _static_address(ip: str | None, gateway: str | None, dns: str | None) -> dict[str, str] | None:
+    """``"192.168.1.20/24"`` + gateway -> the protocol's ip/netmask/gateway fields."""
+    if ip is None:
+        if gateway is not None or dns is not None:
+            raise ValueError("a gateway or dns only makes sense with static_ip")
+        return None
+    if gateway is None:
+        raise ValueError('a static address needs a gateway too, e.g. gateway="192.168.1.1"')
+    try:
+        interface = ipaddress.IPv4Interface(ip if "/" in ip else f"{ip}/24")
+        out = {
+            "ip": str(interface.ip),
+            "netmask": str(interface.netmask),
+            "gateway": str(ipaddress.IPv4Address(gateway)),
+        }
+        if dns is not None:
+            out["dns"] = str(ipaddress.IPv4Address(dns))
+    except ValueError as exc:
+        raise ValueError(f"not an address like 192.168.1.20/24: {exc}") from None
+    return out
 
 
 class Camera:

@@ -95,7 +95,36 @@ def test_manual_control_stops_when_its_connection_closes(client, connect_client)
 
 def test_wifi_status(client):
     status = client.ok("wifi.status")
-    assert status["mode"] in ("ap", "sta")
+    assert status["mode"] in ("ap", "sta", "ap+sta")
+    assert status["hostname"].startswith("movebot-")
+    assert status["ap"] is not None or status["sta"] is not None  # never unreachable
+    saved = status["saved"]
+    assert saved["mode"] in ("ap", "sta", "ap+sta")
+    assert "password" not in saved and "ap_password" not in saved  # SPEC §12.2
+    assert "password" not in str(status).replace("has_password", "")
+
+
+def test_wifi_scan_and_test_do_not_change_anything(client):
+    before = client.ok("wifi.status")
+    networks = client.ok("wifi.scan")["networks"]
+    assert [n["rssi"] for n in networks] == sorted((n["rssi"] for n in networks), reverse=True)
+    assert len({n["ssid"] for n in networks}) == len(networks)
+    assert all(n["security"] in ("open", "wpa", "wpa2", "wpa3", "enterprise") for n in networks)
+    result = client.ok("wifi.test", ssid="no-such-network-4f2a", password="x" * 8, timeout_ms=3000)
+    assert result["joined"] is False and result["reason"] in ("not_found", "timeout")
+    after = client.ok("wifi.status")
+    assert after["saved"] == before["saved"] and after["mode"] == before["mode"]
+
+
+def test_wifi_set_refuses_bad_settings_and_keeps_the_old_ones(client):
+    before = client.ok("wifi.status")["saved"]
+    client.err("wifi.set", "invalid_param", mode="mesh")
+    client.err("wifi.set", "invalid_param", mode="sta")  # no network given
+    client.err("wifi.set", "invalid_param", mode="ap", ap_password="short")
+    client.err("wifi.set", "invalid_param", mode="sta", ssid="Lab", ip="192.168.1.20")  # half
+    client.err("device.set", "invalid_param", name="Robot/One!")
+    client.err("system.restart", "invalid_param", delay_ms=60000)
+    assert client.ok("wifi.status")["saved"] == before
 
 
 def test_telemetry_subscription(client):
